@@ -326,6 +326,122 @@ input[type=range]{width:100%;accent-color:var(--deep)}
 .seenbox.other{cursor:default;opacity:.85}
 .seenbox:focus-within{outline:3px solid var(--ink);outline-offset:2px}
 
+/* ===== Deux champs de texte sur les fiches ===== */
+.notebox{display:grid;gap:2px}
+.nlabel{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.notebox.why .note{font-family:var(--body);font-size:.98rem;line-height:1.45}
+
+/* ===== Réglages : choix du style ===== */
+.skins{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:6px}
+.skinopt{font:inherit;text-align:left;display:grid;gap:2px;background:var(--card);color:var(--ink);border:2px solid var(--line);border-radius:14px;padding:8px 10px;cursor:pointer}
+.skinopt[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--accent)}
+.skinopt b{font-size:.92rem}
+.skinopt small{font-size:.72rem;color:var(--muted);line-height:1.25}
+.sk-sw{display:flex;gap:4px;padding:6px;border-radius:9px;border:1px solid rgba(0,0,0,.08)}
+.sk-sw i{width:18px;height:18px;border-radius:50%;display:block}
+
+/* Éléments propres à certains styles */
+.marquee,.face{display:none}
+
+/* ===== Base commune aux styles modernes ===== */
+html:not([data-skin="carnet"]) body{background-image:none !important;background-color:var(--bg)}
+html:not([data-skin="carnet"]) .btn{border:none;box-shadow:0 3px 12px rgba(20,15,30,.10);font-family:var(--body);font-weight:800;letter-spacing:0;text-transform:none}
+html:not([data-skin="carnet"]) .btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(20,15,30,.14)}
+html:not([data-skin="carnet"]) .btn:active{transform:translateY(1px)}
+html:not([data-skin="carnet"]) .btn.primary{background:var(--deep);color:#fff}
+html:not([data-skin="carnet"]) .btn.ghost{box-shadow:none}
+html:not([data-skin="carnet"]) .card{border:none;transform:none;box-shadow:0 8px 28px rgba(20,15,30,.08);border-radius:20px}
+html:not([data-skin="carnet"]) .card .tape{display:none}
+html:not([data-skin="carnet"]) .card footer{border-top:1px solid var(--line)}
+html:not([data-skin="carnet"]) .card img.photo,html:not([data-skin="carnet"]) .card img.poster{border:none;border-radius:14px}
+html:not([data-skin="carnet"]) .frame{border:none;box-shadow:0 10px 34px rgba(20,15,30,.10);border-radius:26px}
+html:not([data-skin="carnet"]) .frame img.dphoto{border:none}
+html:not([data-skin="carnet"]) .tile{border:none;box-shadow:0 8px 26px rgba(20,15,30,.10)}
+html:not([data-skin="carnet"]) .tile:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(20,15,30,.14)}
+html:not([data-skin="carnet"]) .tile .label{border:none;box-shadow:0 2px 10px rgba(20,15,30,.06)}
+html:not([data-skin="carnet"]) .chip{border:none;background:color-mix(in srgb,var(--accent) 45%,var(--card))}
+html:not([data-skin="carnet"]) .chip.off{background:var(--line)}
+html:not([data-skin="carnet"]) .chip[aria-pressed="true"]{background:var(--deep);color:#fff}
+html:not([data-skin="carnet"]) .hero h1,html:not([data-skin="carnet"]) h2.section{letter-spacing:-.01em}
+html:not([data-skin="carnet"]) .sheet{border:none;box-shadow:0 20px 60px rgba(20,15,30,.25)}
+html:not([data-skin="carnet"]) input[type=text],html:not([data-skin="carnet"]) input[type=url],html:not([data-skin="carnet"]) textarea,html:not([data-skin="carnet"]) select{border:1.5px solid var(--line);background:var(--card)}
+html:not([data-skin="carnet"]) .seenbox,html:not([data-skin="carnet"]) .intro-toggle{border-color:var(--line)}
+html:not([data-skin="carnet"]) .card.gift{box-shadow:0 8px 28px rgba(20,15,30,.12)}
+
+/* ===== Pastille : app moderne, dégradés, petits visages ===== */
+html[data-skin="pastille"] .hero h1{font-weight:800;font-size:clamp(2.2rem,6vw,3.6rem);letter-spacing:-.03em}
+html[data-skin="pastille"] .hero h1 .heart{display:none}
+html[data-skin="pastille"] .tile{border-radius:30px;background-image:linear-gradient(150deg,rgba(255,255,255,.45),rgba(255,255,255,0) 60%) !important;background-size:auto !important}
+html[data-skin="pastille"] .tile .face{display:block;position:absolute;left:50%;top:38%;width:46%;transform:translate(-50%,-50%)}
+html[data-skin="pastille"] .tile .face svg{width:100%;height:auto;display:block}
+html[data-skin="pastille"] .tile .label{background:transparent;box-shadow:none;padding:0 4px}
+html[data-skin="pastille"] .tile .label strong{font-weight:800;letter-spacing:-.01em}
+html[data-skin="pastille"] .tile .label em,html[data-skin="pastille"] .tile .label span{color:color-mix(in srgb,var(--ink) 75%,transparent)}
+html[data-skin="pastille"] .tile.fav .bigheart{top:10%;width:38%}
+html[data-skin="pastille"] .card{border-radius:24px}
+html[data-skin="pastille"] .tile.new{background:transparent !important;border:2px dashed var(--line)}
+
+/* ===== Papeterie : crème, grands titres bicolores, cercles ===== */
+html[data-skin="papeterie"] .hero h1{font-weight:800;color:var(--deep);font-size:clamp(2.6rem,7vw,4.6rem);letter-spacing:-.02em;line-height:.95}
+html[data-skin="papeterie"] .hero h1 .heart{display:none}
+html[data-skin="papeterie"] .hero p.sub{font-family:var(--body);font-size:1.25rem;color:var(--ink)}
+html[data-skin="papeterie"] .home-grid .tiles{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));row-gap:64px;padding-bottom:40px}
+html[data-skin="papeterie"] .tile{border-radius:50%;overflow:visible;box-shadow:none}
+html[data-skin="papeterie"] .tile:hover{box-shadow:0 10px 26px rgba(20,15,30,.12)}
+html[data-skin="papeterie"] .tile img.tcover{border-radius:50%}
+html[data-skin="papeterie"] .tile .label{position:absolute;left:0;right:0;top:calc(100% + 8px);background:none;box-shadow:none;text-align:center;padding:0;justify-items:center}
+html[data-skin="papeterie"] .tile .label strong{font-family:var(--body);font-weight:800;font-size:1rem;letter-spacing:0}
+html[data-skin="papeterie"] .tile .label em{font-family:var(--body);font-size:.82rem;color:var(--muted)}
+html[data-skin="papeterie"] .tile.new{border:2px dashed var(--line);font-family:var(--body);font-size:.95rem}
+html[data-skin="papeterie"] h2.section{color:var(--deep);font-weight:800}
+html[data-skin="papeterie"] .home-hero::after{content:"";display:block;height:28px;margin:18px -18px 0;background:var(--accent);
+  -webkit-mask:radial-gradient(28px 14px at 50% 0,#000 98%,transparent) 0 0/56px 28px repeat-x;mask:radial-gradient(28px 14px at 50% 0,#000 98%,transparent) 0 0/56px 28px repeat-x;transform:rotate(180deg)}
+
+/* ===== Argile : arches, festons, sauge et bordeaux ===== */
+html[data-skin="argile"] .hero h1{color:var(--deep);font-weight:400;font-size:clamp(2.4rem,6.5vw,4rem)}
+html[data-skin="argile"] .hero h1 .heart{display:none}
+html[data-skin="argile"] .hero p.sub{font-family:var(--body);color:var(--ink)}
+html[data-skin="argile"] .home-hero{background:var(--deep);color:#fff;border-radius:28px 28px 0 0;padding:34px 30px 30px;margin-bottom:34px;position:relative}
+html[data-skin="argile"] .home-hero h1,html[data-skin="argile"] .home-hero p.sub,html[data-skin="argile"] .home-hero .icon-btn{color:#fff}
+html[data-skin="argile"] .home-hero::after{content:"";position:absolute;left:0;right:0;bottom:-18px;height:18px;background:var(--deep);
+  -webkit-mask:radial-gradient(18px 18px at 50% 0,#000 98%,transparent) 0 0/36px 18px repeat-x;mask:radial-gradient(18px 18px at 50% 0,#000 98%,transparent) 0 0/36px 18px repeat-x}
+html[data-skin="argile"] .home-hero .btn{background:var(--card);color:var(--deep)}
+html[data-skin="argile"] .home-hero .btn.primary{background:var(--accent);color:var(--ink)}
+html[data-skin="argile"] .home-hero .intro-toggle{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+html[data-skin="argile"] .tile{aspect-ratio:3/4;border-radius:999px 999px 22px 22px}
+html[data-skin="argile"] .tile .label{background:var(--card);text-align:center;justify-items:center}
+html[data-skin="argile"] .tile .label strong{font-weight:400}
+html[data-skin="argile"] .tile.new{border:2px dashed var(--line)}
+html[data-skin="argile"] h2.section{color:var(--deep);font-weight:400}
+html[data-skin="argile"] .frame{border-radius:999px 999px 26px 26px;padding-top:70px}
+html[data-skin="argile"] .daily .perch{top:-58px}
+html[data-skin="argile"] .doodles{display:none}
+
+/* ===== Festival : bandeau festonné et ruban qui défile ===== */
+html[data-skin="festival"] .hero h1{text-transform:uppercase;font-weight:400;letter-spacing:.01em;font-size:clamp(2.4rem,7vw,4.2rem)}
+html[data-skin="festival"] .hero h1 .heart{display:none}
+html[data-skin="festival"] .wrap{padding-top:0}
+html[data-skin="festival"] #head{position:relative}
+html[data-skin="festival"] #head::before{content:"";display:block;height:46px;margin:0 calc(50% - 50vw) 18px;background:var(--accent);
+  -webkit-mask:linear-gradient(#000,#000) 0 0/100% 32px no-repeat,radial-gradient(14px 14px at 50% 0,#000 98%,transparent) 0 32px/28px 14px repeat-x;mask:linear-gradient(#000,#000) 0 0/100% 32px no-repeat,radial-gradient(14px 14px at 50% 0,#000 98%,transparent) 0 32px/28px 14px repeat-x}
+html[data-skin="festival"] .marquee{display:block;overflow:hidden;margin:22px calc(50% - 50vw) 8px;background:var(--deep);color:#fff;padding:9px 0;transform:rotate(-1deg)}
+html[data-skin="festival"] .marquee > div{display:flex;gap:22px;width:max-content;animation:defile 38s linear infinite;font-family:var(--display);text-transform:uppercase;font-size:1.05rem;letter-spacing:.04em}
+html[data-skin="festival"] .marquee i{font-style:normal;color:var(--butter)}
+@keyframes defile{to{transform:translateX(-50%)}}
+html[data-skin="festival"] .home-grid .tiles{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));row-gap:60px;padding-bottom:36px}
+html[data-skin="festival"] .tile{border-radius:50%;overflow:visible;box-shadow:none}
+html[data-skin="festival"] .tile img.tcover{border-radius:50%}
+html[data-skin="festival"] .tile .label{position:absolute;left:0;right:0;top:calc(100% + 8px);background:none;box-shadow:none;text-align:center;padding:0;justify-items:center}
+html[data-skin="festival"] .tile .label strong{font-size:1rem;text-transform:uppercase}
+html[data-skin="festival"] .tile .label em,html[data-skin="festival"] .tile .label span{font-family:var(--body);font-size:.78rem;color:var(--muted)}
+html[data-skin="festival"] .tile.new{border:2px dashed var(--line)}
+html[data-skin="festival"] h2.section{text-transform:uppercase;font-weight:400}
+html[data-skin="festival"] .frame{background:var(--card)}
+@media (prefers-reduced-motion:reduce){html[data-skin="festival"] .marquee > div{animation:none}}
+html:not([data-skin="carnet"]) .home-hero p.sub{font-family:var(--body);letter-spacing:0}
+html[data-skin="papeterie"] .home-grid .tiles,html[data-skin="festival"] .home-grid .tiles{row-gap:96px;padding-bottom:84px}
+html[data-skin="festival"] .marquee{margin-bottom:46px}
+
 </style>
 
 </head>
@@ -442,6 +558,14 @@ const DRAGON_SVG = '<svg viewBox="0 0 70 56" aria-hidden="true">'
   + '<circle cx="55" cy="25" r="1.8" fill="'+INK+'"/><path d="M59 30 q2 1 3 -1" fill="none" stroke="'+INK+'" stroke-width="1.5" stroke-linecap="round"/>'
   + '<ellipse cx="49" cy="30" rx="2.6" ry="1.6" fill="#f2a0a0" opacity=".7"/></svg>';
 
+/* Petits visages pour le style « Pastille » */
+const FACES = [
+  '<svg viewBox="0 0 60 30"><ellipse cx="16" cy="13" rx="6" ry="7" fill="#1f1b2e"/><ellipse cx="44" cy="13" rx="6" ry="7" fill="#1f1b2e"/><circle cx="18" cy="10" r="2" fill="#fff"/><circle cx="46" cy="10" r="2" fill="#fff"/><path d="M25 20 q5 5 10 0" fill="none" stroke="#1f1b2e" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  '<svg viewBox="0 0 60 30"><path d="M10 14 q6 -7 12 0 M38 14 q6 -7 12 0" fill="none" stroke="#1f1b2e" stroke-width="3" stroke-linecap="round"/><path d="M25 19 q5 5 10 0" fill="none" stroke="#1f1b2e" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  '<svg viewBox="0 0 60 30"><circle cx="16" cy="14" r="7" fill="#fff"/><circle cx="44" cy="14" r="7" fill="#fff"/><path d="M16 9 l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#1f1b2e"/><path d="M44 9 l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#1f1b2e"/><path d="M26 22 q4 4 8 0" fill="none" stroke="#1f1b2e" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  '<svg viewBox="0 0 60 30"><ellipse cx="16" cy="14" rx="5" ry="6" fill="#1f1b2e"/><ellipse cx="44" cy="14" rx="5" ry="6" fill="#1f1b2e"/><path d="M24 21 q6 4 12 0" fill="none" stroke="#1f1b2e" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="8" cy="22" rx="4" ry="2.4" fill="#ff8fb1" opacity=".7"/><ellipse cx="52" cy="22" rx="4" ry="2.4" fill="#ff8fb1" opacity=".7"/></svg>'
+];
+
 /* Doodles discrets de la page d'accueil.
    Pour en ajouter un : une entrée de plus, avec son dessin (svg), sa place (style) et sa bulle (title). */
 const DOODLES = [
@@ -502,11 +626,14 @@ const FONTS = {
     fraunces:{label:"Fraunces", css:'"Fraunces"', g:"Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800"},
     bagel:   {label:"Bagel Fat One", css:'"Bagel Fat One"', g:"Bagel+Fat+One"},
     fredoka: {label:"Fredoka", css:'"Fredoka"', g:"Fredoka:wght@500;700"},
+    jakarta: {label:"Plus Jakarta Sans", css:'"Plus Jakarta Sans"', g:"Plus+Jakarta+Sans:wght@400;600;800"},
+    youngd:  {label:"Young Serif", css:'"Young Serif"', g:"Young+Serif"},
     baloo:   {label:"Baloo", css:'"Baloo 2"', g:"Baloo+2:wght@600;800"}
   },
   body: {
     fraunces:{label:"Fraunces", css:'"Fraunces"', g:"Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800"},
     nunito:  {label:"Nunito", css:'"Nunito"', g:"Nunito:wght@400;600;700;800"},
+    jakarta: {label:"Plus Jakarta Sans", css:'"Plus Jakarta Sans"', g:"Plus+Jakarta+Sans:wght@400;600;800"},
     quicksand:{label:"Quicksand", css:'"Quicksand"', g:"Quicksand:wght@400;600;700"},
     lora:    {label:"Lora", css:'"Lora"', g:"Lora:wght@400;600;700"},
     young:   {label:"Young Serif", css:'"Young Serif"', g:"Young+Serif"}
@@ -520,7 +647,14 @@ const FONTS = {
 };
 const INK_DEFAULT = "#33402f";
 const presetColors = k => { const t = THEMES[k] || THEMES.sauge; return {bg:t.bg, accent:t.accent, deep:t.deep, ink:INK_DEFAULT, card:"#ffffff"}; };
-const DEFAULT_LOOK = {fontDisplay:"matcha", fontBody:"fraunces", fontHand:"gaegu", fontScale:1, colors:null};
+const DEFAULT_LOOK = {skin:"carnet", fontDisplay:"matcha", fontBody:"fraunces", fontHand:"gaegu", fontScale:1, colors:null};
+const SKINS = {
+  carnet:   {label:"Carnet", desc:"Pois, contours épais, cartes scotchées", look:{fontDisplay:"matcha", fontBody:"fraunces", fontHand:"gaegu"}, colors:{bg:"#f1f6ec", accent:"#b3c6a5", deep:"#56704b", ink:"#33402f", card:"#ffffff"}},
+  pastille: {label:"Pastille", desc:"Moderne, doux, petits visages", look:{fontDisplay:"jakarta", fontBody:"jakarta", fontHand:"gaegu"}, colors:{bg:"#f7f6fb", accent:"#b9a6f5", deep:"#6d3fd6", ink:"#1f1b2e", card:"#ffffff"}},
+  papeterie:{label:"Papeterie", desc:"Crème, cercles, grands titres", look:{fontDisplay:"fraunces", fontBody:"jakarta", fontHand:"gaegu"}, colors:{bg:"#fbf6ee", accent:"#f6c9cf", deep:"#e0382c", ink:"#2a2320", card:"#ffffff"}},
+  argile:   {label:"Argile", desc:"Arches, festons, sauge et bordeaux", look:{fontDisplay:"youngd", fontBody:"jakarta", fontHand:"gaegu"}, colors:{bg:"#f6eee2", accent:"#a9bd9c", deep:"#7b2e3d", ink:"#4a1f28", card:"#fffaf2"}},
+  festival: {label:"Festival", desc:"Bandeaux festonnés, ruban qui défile", look:{fontDisplay:"bagel", fontBody:"jakarta", fontHand:"gaegu"}, colors:{bg:"#fbf7f2", accent:"#e9c6ec", deep:"#e8743b", ink:"#2d2a32", card:"#ffffff"}}
+};
 function siteColors(s){ s = s || state.settings; const c = s.colors; return c && isHex(c.accent) ? {...presetColors("sauge"), ...c} : presetColors(s.ambiance || "sauge"); }
 function applyAppearance(s){
   s = {...DEFAULT_LOOK, ...(s || {})};
@@ -537,6 +671,7 @@ function applyAppearance(s){
   root.setProperty("--ink", col.ink); root.setProperty("--card", col.card);
   root.setProperty("--muted", mixHex(col.ink, col.bg, .38)); root.setProperty("--line", mixHex(col.ink, col.bg, .84));
   root.setProperty("--paper", col.bg);
+  document.documentElement.dataset.skin = SKINS[s.skin] ? s.skin : "carnet";
   const fams = [...new Set([d.g, b.g, h.g].filter(Boolean))];
   let link = document.getElementById("gf");
   if(!link){ link = document.createElement("link"); link.id = "gf"; link.rel = "stylesheet"; document.head.appendChild(link); }
@@ -1037,6 +1172,7 @@ function renderHome(){
     + '<svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path d="'+HEART_PATH+'" fill="#ff86ad" stroke="#4b2a4f" stroke-width="1.8"/></svg></h1>'
     + introHTML(s)
     + '<div class="hero-actions"><button class="btn primary" data-act="add">'+PAW+' Ajouter un petit truc</button><button class="btn small" data-act="settings">Personnaliser</button><button class="btn small" data-act="reglages">Réglages</button></div>'
+    + '<div class="marquee" aria-hidden="true"><div>'+Array(8).fill('<span>'+esc(s.subtitle || s.title || "")+'</span><i>✺</i>').join("")+'</div></div>'
     + '</header>';
   const cats = sortedCats();
   let h = '<div class="home-grid"><div class="home-main"><div class="tiles">';
@@ -1047,6 +1183,7 @@ function renderHome(){
     h += '<a class="tile" href="#d-'+esc(c.id)+'" data-act="open-domain" data-id="'+esc(c.id)+'" draggable="true" data-drag="cat:'+esc(c.id)+'" data-drop="cat:'+esc(c.id)+'"'
       + ' style="'+themeVars(th)+';'+patternCSS(patternOf(c), th, true)+'">'
       + (c.coverId ? photoTag(c.coverId, "tcover", "") : '')
+      + '<span class="face" aria-hidden="true">'+FACES[hashStr(c.id) % FACES.length]+'</span>'
       + '<div class="label"><strong>'+esc(c.name)+'</strong>'
       + (c.desc ? '<em>'+esc(c.desc)+'</em>' : '')
       + '<span>'+(n ? plural(n,"petit truc","petits trucs") : "vide pour l'instant")+'</span>'
@@ -1186,7 +1323,7 @@ function dailyHTML(){
     const c = catById(it.cat);
     h += photoTag(it.photoId, "dphoto", it.title || "Photo du jour")
       + (it.title ? '<h3 class="dtitle">'+esc(it.title)+'</h3>' : '')
-      + (it.note ? '<p class="dnote">'+esc(it.note)+'</p>' : '')
+      + ((it.note || it.why) ? '<p class="dnote">'+esc(it.note || it.why)+'</p>' : '')
       + '<div class="dmeta">'+(c ? '<a class="chip" href="#d-'+esc(c.id)+'" data-act="open-domain" data-id="'+esc(c.id)+'" style="background:'+themeOf(c).accent+'">'+esc(c.name)+'</a>' : '')
       + (it.author ? '<span>de '+esc(it.author)+'</span>' : '') + '</div>'
       + '<div class="dreplies">'+repliesHTML("item", it)+'</div>';
@@ -1317,7 +1454,7 @@ function cardHTML(it, idx, ctx){
   const l = it.list ? listById(it.list) : null;
   const rot = ((idx % 3) - 1) * 0.8;
   const li = it.url ? linkInfo(it.url) : null;
-  const isMot = !it.title && !li && !it.photoId;
+  const isMot = !it.title && !li && !it.photoId && !it.posterUrl;
   const mine = (it.favBy||[]).includes(state.me);
   const favNames = (it.favBy||[]).filter(Boolean);
   const where = (ctx === "home" || ctx === "fav") ? (c ? c.name : "") + (l ? " · " + l.name : "") : (l && ctx === "mood" ? l.name : "");
@@ -1330,7 +1467,9 @@ function cardHTML(it, idx, ctx){
   if(poster) h += '<img class="poster'+(it.posterUrl ? '' : ' wide')+'" src="'+esc(poster)+'" alt="'+esc(it.title || "Affiche")+'" loading="lazy" draggable="false" referrerpolicy="no-referrer">';
   if(it.photoId) h += photoTag(it.photoId, "photo", it.title || "Photo");
   if(it.title) h += '<h3>'+esc(it.title)+'</h3>';
-  if(it.note) h += '<p class="note">'+esc(it.note)+'</p>';
+  const both = it.why && it.note;
+  if(it.why) h += '<div class="notebox why">'+(both || !it.title ? '<span class="nlabel">Pourquoi</span>' : '')+'<p class="note">'+esc(it.why)+'</p></div>';
+  if(it.note) h += '<div class="notebox">'+(both ? '<span class="nlabel">Ça m\'a fait penser à toi</span>' : '')+'<p class="note">'+esc(it.note)+'</p></div>';
   if(li) h += '<div class="links">' + li.links.map(x => '<a class="btn small'+(x.primary?' primary':'')+'" href="'+esc(x.href)+'" target="_blank" rel="noopener noreferrer" draggable="false">'+esc(x.label)+'</a>').join("") + (li.hint ? '<span class="hint">'+esc(li.hint)+'</span>' : '') + '</div>';
   if(isMedia(it)){
     const seen = it.seenBy || [];
@@ -1393,7 +1532,8 @@ function itemForm(it, preset){
     + '<div class="field" style="flex:1 1 180px"><label for="f-list" id="f-list-lbl">Rangé dans</label><select id="f-list"></select></div></div>'
     + '<div class="field"><label for="f-title">Titre</label><input type="text" id="f-title" maxlength="200" value="'+esc(it.title||"")+'" placeholder="Le nom du film, du morceau… (facultatif)"></div>'
     + '<div class="field"><label for="f-url">Lien</label><input type="url" id="f-url" value="'+esc(it.url||"")+'" placeholder="https://… (facultatif)"><span class="help">Musique : colle un lien Spotify ou Tidal, l\'autre pourra l\'ouvrir sur son appli à elle.</span></div>'
-    + '<div class="field"><label for="f-note">Pourquoi ça m\'a fait penser à toi</label><textarea id="f-note" maxlength="4000">'+esc(it.note||"")+'</textarea></div>'
+    + '<div class="field"><label for="f-why">Pourquoi</label><textarea id="f-why" maxlength="4000" placeholder="Ce que j\'en ai pensé, pourquoi j\'ai envie de te le partager… (facultatif)">'+esc(it.why||"")+'</textarea></div>'
+    + '<div class="field"><label for="f-note">Pourquoi ça m\'a fait penser à toi</label><textarea id="f-note" maxlength="4000" placeholder="(facultatif)">'+esc(it.note||"")+'</textarea></div>'
     + '<div class="field"><span class="lbl">Mood</span><div class="row" id="f-moods"></div><div class="row"><input type="text" id="f-newmood" maxlength="40" placeholder="Nouveau mood"><button type="button" class="btn small" id="f-addmood">Ajouter</button></div></div>'
     + '<div class="field"><span class="lbl">Affiche ou pochette</span>'
     +   '<div class="row"><select id="f-pkind" aria-label="Type">'+Object.entries(POSTER_KINDS).map(([k,v]) => '<option value="'+k+'">'+v.label+'</option>').join("")+'</select>'
@@ -1462,9 +1602,10 @@ function itemForm(it, preset){
         title: sheet.querySelector("#f-title").value.trim(),
         url: sheet.querySelector("#f-url").value.trim(),
         note: sheet.querySelector("#f-note").value.trim(),
+        why: sheet.querySelector("#f-why").value.trim(),
         moods: [...sel], photoId: getPhoto() || null, posterUrl: posterUrl || null, updatedAt: Date.now()
       };
-      if(!data.title && !data.url && !data.note && !data.photoId && !data.posterUrl){ toast("Ajoute au moins un titre, un lien, un mot ou une photo."); return; }
+      if(!data.title && !data.url && !data.note && !data.why && !data.photoId && !data.posterUrl){ toast("Ajoute au moins un titre, un lien, un mot ou une photo."); return; }
       if(editing) W.updItem(it.id, data).catch(() => {});
       else W.addItem({...data, id: uid(), createdAt: Date.now(), order: -Date.now(), author: state.me, favBy: [], replies: []}).catch(() => {});
       closeModal(); toast(editing ? "Modifié." : "Ajouté ♥");
@@ -1575,13 +1716,15 @@ function settingsForm(){
 const COLOR_FIELDS = [["bg","Fond"],["accent","Couleur principale"],["deep","Couleur foncée"],["ink","Texte et contours"],["card","Cartes"]];
 function reglagesForm(){
   const s0 = {...DEFAULT_LOOK, ...state.settings};
-  const look = {fontDisplay: s0.fontDisplay, fontBody: s0.fontBody, fontHand: s0.fontHand, fontScale: +s0.fontScale || 1, colors: {...siteColors()}};
+  const look = {skin: SKINS[s0.skin] ? s0.skin : "carnet", fontDisplay: s0.fontDisplay, fontBody: s0.fontBody, fontHand: s0.fontHand, fontScale: +s0.fontScale || 1, colors: {...siteColors()}};
   const opts = (group, cur) => Object.entries(FONTS[group]).map(([k, v]) => '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+esc(v.label)+'</option>').join("");
   const preview = () => { state.previewLook = true; const keep = state.settings; state.settings = {...keep, ...look}; applyAppearance(state.settings); applyPageTheme(null); state.settings = keep; };
   const revert = () => { state.previewLook = false; render(); };
   const chip = (c, label, attr) => '<span class="themechip"><button type="button" '+attr+' title="'+esc(label)+'"><span class="tc" style="background:'+c.bg+'"></span><span class="tc" style="background:'+c.accent+'"></span><span class="tc" style="background:'+c.deep+'"></span><span class="tc" style="background:'+c.ink+'"></span>'+esc(label)+'</button>';
   openModal('<h2>Réglages</h2><form id="regForm">'
-    + '<h3 class="subhead first">Texte</h3>'
+    + '<h3 class="subhead first">Style</h3>'
+    + '<div class="skins" id="r-skins"></div>'
+    + '<h3 class="subhead">Texte</h3>'
     + '<div class="field"><label for="r-size">Taille du texte : <b id="r-size-v">'+Math.round(look.fontScale*100)+' %</b></label><input type="range" id="r-size" min="0.85" max="1.3" step="0.05" value="'+look.fontScale+'"></div>'
     + '<div class="row" style="align-items:flex-start">'
     + '<div class="field" style="flex:1 1 150px"><label for="s-fd">Police des titres</label><select id="s-fd">'+opts("display", look.fontDisplay)+'</select></div>'
@@ -1594,6 +1737,15 @@ function reglagesForm(){
     + '<div class="field"><span class="lbl">Mes thèmes</span><div class="themes" id="r-mine"></div>'
     + '<div class="row"><input type="text" id="r-tname" maxlength="30" placeholder="Nom du thème"><button type="button" class="btn small" id="r-tsave">Enregistrer ces couleurs</button></div></div>'
     + '<div class="sheet-actions"><button type="button" class="btn" id="r-cancel">Annuler</button><button type="submit" class="btn primary">Appliquer</button></div></form>', sheet => {
+    const skinBox = sheet.querySelector("#r-skins");
+    const drawSkins = () => { skinBox.innerHTML = Object.entries(SKINS).map(([k, v]) => '<button type="button" class="skinopt" data-skin="'+k+'" aria-pressed="'+(k===look.skin)+'"><span class="sk-sw" style="background:'+v.colors.bg+'"><i style="background:'+v.colors.accent+'"></i><i style="background:'+v.colors.deep+'"></i></span><b>'+esc(v.label)+'</b><small>'+esc(v.desc)+'</small></button>').join(""); };
+    drawSkins();
+    skinBox.addEventListener("click", e => {
+      const b = e.target.closest("[data-skin]"); if(!b) return;
+      const sk = SKINS[b.dataset.skin]; look.skin = b.dataset.skin; Object.assign(look, sk.look); look.colors = {...sk.colors};
+      sheet.querySelector("#s-fd").value = look.fontDisplay; sheet.querySelector("#s-fb").value = look.fontBody; sheet.querySelector("#s-fh").value = look.fontHand;
+      drawSkins(); drawColors(); preview();
+    });
     const colBox = sheet.querySelector("#r-colors");
     const drawColors = () => { colBox.innerHTML = COLOR_FIELDS.map(([k, label]) => '<label class="colorfield"><input type="color" data-col="'+k+'" value="'+look.colors[k]+'"><span>'+esc(label)+'</span></label>').join(""); };
     drawColors();
