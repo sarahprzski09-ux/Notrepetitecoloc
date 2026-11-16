@@ -850,6 +850,9 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 .favgroup[open] .fg-chev{transform:rotate(180deg);margin-left:auto}
 .fg-body{padding:16px;border-top:2px solid var(--ink)}
 @media (max-width:640px){.favgroup>summary{padding:10px 12px;gap:9px}.fg-ic{width:34px;height:34px;padding:7px}.fg-name{font-size:1.1rem}.fg-thumbs img{width:26px;height:36px;margin-left:-10px}.fg-body{padding:10px}}
+.indaily{margin-top:-4px}
+.indaily .help{display:inline;margin-left:2px}
+.field:has(.ph-prev:empty)+.indaily{display:none}
 
 </style>
 
@@ -874,7 +877,7 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 
 </script>
 <script>
-const APP_VERSION = "16/11 à 13h01";
+const APP_VERSION = "16/11 à 13h20";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -2122,7 +2125,7 @@ function isMedia(it){
 
 /* ---------- Photo du jour ---------- */
 function dailyPick(){
-  const pool = state.items.filter(i => i.photoId && !isWrapped(i)).sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const pool = state.items.filter(i => i.photoId && i.inDaily !== false && !isWrapped(i)).sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   if(!pool.length) return null;
   const d = new Date();
   let h = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
@@ -2404,6 +2407,7 @@ function itemForm(it, preset){
     + '</div>'
     + '<div class="field"><span class="lbl">Mood</span><div class="row" id="f-moods"></div><div class="row"><input type="text" id="f-newmood" maxlength="40" placeholder="Nouveau mood"><button type="button" class="btn small" id="f-addmood">Ajouter</button></div></div>'
     + photoInputHTML('<span class="media-only-i">Photo perso</span><span class="text-only-i">Image de couverture (facultatif)</span>', "f-photo")
+    + '<label class="check indaily"><input type="checkbox" id="f-indaily"'+(it.inDaily === false ? '' : ' checked')+'> Mettre cette photo dans les photos du jour <span class="help">(décoche si c\'est juste pour décorer)</span></label>'
     + '<div class="sheet-actions">'+(editing ? '<button type="button" class="btn ghost" id="f-del">Supprimer</button>' : '')
     + '<button type="button" class="btn" data-act="close">Annuler</button><button type="submit" class="btn primary" id="f-save">Enregistrer</button></div></form>';
   openModal(html, sheet => {
@@ -2535,7 +2539,7 @@ function itemForm(it, preset){
         url: sheet.querySelector("#f-url").value.trim(),
         note: sheet.querySelector("#f-note").value.trim(),
         why: sheet.querySelector("#f-why").value.trim(),
-        moods: [...sel], photoId: getPhoto() || null, posterUrl: posterUrl || null, updatedAt: Date.now()
+        moods: [...sel], photoId: getPhoto() || null, inDaily: sheet.querySelector("#f-indaily").checked, posterUrl: posterUrl || null, updatedAt: Date.now()
       };
       const richClean = sanitizeRich(ed.innerHTML);
       data.rich = (richText(richClean) || /<img/.test(richClean)) ? richClean : null;
