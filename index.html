@@ -863,6 +863,26 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 .ttplayer iframe{width:100%;height:100%;border:0;display:block}
 .ttnote{text-align:center;margin-top:8px}
 .card img.poster[data-act="tt-play"]{cursor:pointer}
+/* Notifications */
+.nbell{position:relative}
+.nbell svg{display:block}
+.nbell b{position:absolute;top:-8px;right:-12px}
+.notifs{background:var(--card);border:2px solid var(--ink);border-radius:22px;padding:14px 16px;margin:0 0 22px;box-shadow:6px 6px 0 var(--deep)}
+.nhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.nhead h2{margin:0;font-family:var(--display);font-weight:400;font-size:1.35rem;color:var(--deep);display:flex;align-items:center;gap:8px}
+.nbadge{background:var(--accent);color:#fff;border:2px solid var(--ink);border-radius:999px;font-family:var(--body);font-size:.75rem;font-weight:800;padding:1px 9px}
+.nlist{display:grid;gap:6px}
+.notif{font:inherit;color:var(--ink);text-align:left;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;width:100%;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:8px 12px;cursor:pointer;transition:border-color .15s,transform .15s}
+.notif:hover{border-color:var(--ink);transform:translateX(2px)}
+.nic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;background:var(--deep);border:2px solid var(--ink);font-size:.85rem}
+.notif.reply .nic{background:var(--accent)}
+.ntx{font-size:.92rem;line-height:1.35;min-width:0}
+.ntx i{display:block;color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
+.nwhen{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.notif.old{opacity:.6}
+.notif.new{border-color:var(--accent)}
+.nmore{margin-top:8px;font:inherit;font-size:.82rem;font-weight:800;background:none;border:none;color:var(--deep);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@media (max-width:640px){.notif{grid-template-columns:auto 1fr;padding:8px 10px}.nwhen{grid-column:2}.nhead h2{font-size:1.15rem}}
 
 </style>
 
@@ -887,7 +907,7 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 
 </script>
 <script>
-const APP_VERSION = "16/11 à 17h37";
+const APP_VERSION = "16/11 à 18h07";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1291,7 +1311,51 @@ function syncFromData(){
   state.cats = Array.isArray(d.cats) ? d.cats : [];
   state.lists = Array.isArray(d.lists) ? d.lists : [];
   state.items = Array.isArray(d.items) ? d.items : [];
+  state.notifRead = (d.notifRead && d.notifRead[state.me]) || 0;
   registerCustomFonts();
+}
+/* ---------- Petites notifications : ce que l'autre a regardé ou répondu ---------- */
+function notifications(){
+  const me = state.me, ev = [];
+  state.items.forEach(it => {
+    const label = it.title || (it.rich ? richText(it.rich).slice(0, 40) : "") || (it.note || "").slice(0, 40) || "un partage";
+    Object.entries(it.seenAt || {}).forEach(([who, at]) => { if(who !== me && it.author !== who && (it.seenBy || []).includes(who)) ev.push({type:"seen", who, at, label, id: it.id, word: seenWord(catById(it.cat)).toLowerCase()}); });
+    (it.replies || []).forEach(r => { if(r.by && r.by !== me && r.at) ev.push({type:"reply", who: r.by, at: r.at, label, id: it.id, text: r.text}); });
+  });
+  state.lists.forEach(l => (l.replies || []).forEach(r => { if(r.by && r.by !== me && r.at) ev.push({type:"reply", who: r.by, at: r.at, label: l.name || "une liste", list: l.id, cat: l.cat, text: r.text}); }));
+  return ev.sort((a,b) => b.at - a.at);
+}
+function notifLine(n){
+  const verb = n.type === "seen" ? (n.word === "lu" ? "a lu" : n.word === "écouté" ? "a écouté" : "a regardé") : "a répondu à";
+  const target = n.id ? 'data-act="show-item" data-id="'+esc(n.id)+'"' : 'data-act="open-domain" data-id="'+esc(n.cat || "")+'"';
+  return '<button type="button" class="notif '+n.type+'" '+target+'><span class="nic" aria-hidden="true">'+(n.type === "seen" ? "✓" : "✎")+'</span>'
+    + '<span class="ntx"><b>'+esc(n.who)+'</b> '+verb+' « '+esc(n.label.length > 48 ? n.label.slice(0, 46) + "…" : n.label)+' »'
+    + (n.text ? '<i>“'+esc(n.text.length > 90 ? n.text.slice(0, 88) + "…" : n.text)+'”</i>' : '')+'</span><span class="nwhen">'+esc(timeAgo(n.at))+'</span></button>';
+}
+function timeAgo(ts){
+  const m = Math.round((Date.now() - ts) / 60000);
+  if(m < 1) return "à l'instant"; if(m < 60) return "il y a " + m + " min";
+  const h = Math.round(m / 60); if(h < 24) return "il y a " + h + " h";
+  const d = Math.round(h / 24); if(d < 7) return d === 1 ? "hier" : "il y a " + d + " jours";
+  return fmtDate(ts);
+}
+function notifStripHTML(){
+  const unread = notifications().filter(n => n.at > (state.notifRead || 0));
+  if(!unread.length) return "";
+  return '<section class="notifs" aria-label="Du nouveau"><div class="nhead"><h2>Du nouveau <span class="nbadge">'+unread.length+'</span></h2><button type="button" class="btn small" data-act="notifs-read">C\'est vu ♡</button></div>'
+    + '<div class="nlist">'+unread.slice(0, 5).map(notifLine).join("")+'</div>'
+    + (unread.length > 5 ? '<button type="button" class="nmore" data-act="notifs-all">Voir les '+unread.length+' nouveautés</button>' : '')+'</section>';
+}
+function notifsModal(){
+  const all = notifications().slice(0, 40), read = state.notifRead || 0;
+  openModal('<h2>Les nouvelles de la coloc</h2>'
+    + (all.length ? '<div class="nlist">'+all.map(n => notifLine(n).replace('class="notif ', 'class="notif '+(n.at > read ? 'new ' : 'old '))).join("")+'</div>' : '<p class="help">Rien pour l\'instant : quand l\'autre coche « Vu » ou répond à quelque chose, ça apparaîtra ici.</p>')
+    + '<div class="sheet-actions"><button type="button" class="btn primary" data-act="close">Fermer</button></div>');
+  markNotifsRead();
+}
+function markNotifsRead(){
+  const last = (notifications()[0] || {}).at || 0;
+  if(last > (state.notifRead || 0)){ state.notifRead = last; W.readNotifs(state.me, last).catch(() => {}); }
 }
 const people = () => (state.settings.people || []).filter(Boolean);
 
@@ -1381,7 +1445,7 @@ const W = {
   updItem: (id, patch) => commit(d => { const x = findIn(d.items, id); if(x) Object.assign(x, patch); }, "modif"),
   unwrap: (id, who) => commit(d => { const x = findIn(d.items, id); if(!x) return; const s = new Set(x.openedBy || []); s.add(who); x.openedBy = [...s]; }, "cadeau ouvert"),
   delItem: id => commit(d => { d.items = d.items.filter(x => x.id !== id); }, "suppression"),
-  setSeen: (id, who, on) => commit(d => { const x = findIn(d.items, id); if(!x) return; const s = new Set(x.seenBy || []); on ? s.add(who) : s.delete(who); x.seenBy = [...s]; }, "vu"),
+  setSeen: (id, who, on) => commit(d => { const x = findIn(d.items, id); if(!x) return; const s = new Set(x.seenBy || []); on ? s.add(who) : s.delete(who); x.seenBy = [...s]; x.seenAt = {...(x.seenAt || {})}; if(on) x.seenAt[who] = Date.now(); else delete x.seenAt[who]; }, "vu"),
   setFav: (id, who, on) => commit(d => { const x = findIn(d.items, id); if(!x) return; const s = new Set(x.favBy || []); on ? s.add(who) : s.delete(who); x.favBy = [...s]; }, "favori"),
   reply: (kind, id, rep) => commit(d => { const x = findIn(kind === "list" ? d.lists : d.items, id); if(!x) return; x.replies = x.replies || []; if(!x.replies.some(r => r.id === rep.id)) x.replies.push(rep); }, "petit mot"),
   addCat: obj => commit(d => { if(!findIn(d.cats, obj.id)) d.cats.push(obj); }, "domaine"),
@@ -1392,6 +1456,7 @@ const W = {
   delList: id => commit(d => { d.lists = d.lists.filter(x => x.id !== id); d.items.forEach(i => { if(i.list === id) i.list = null; }); }, "liste"),
   addMood: m => commit(d => { d.moods = d.moods || []; if(!d.moods.includes(m)) d.moods.push(m); }, "mood"),
   delMood: m => commit(d => { d.moods = (d.moods || []).filter(x => x !== m); (d.items || []).forEach(i => { if(Array.isArray(i.moods)) i.moods = i.moods.filter(x => x !== m); }); }, "mood"),
+  readNotifs: (who, ts) => commit(d => { d.notifRead = {...(d.notifRead || {}), [who]: ts}; }, "notifications lues"),
   setSettings: patch => commit(d => { d.settings = {...(d.settings||{}), ...patch}; }, "réglages")
 };
 
@@ -1749,6 +1814,7 @@ function dailyBubble(it){
     + '<form class="replyform dform" data-reply="item:'+esc(it.id)+'"><input type="text" maxlength="500" placeholder="'+(text || shown.length ? 'Répondre…' : 'Un petit mot sur cette photo ?')+'" aria-label="Répondre à la photo du jour" id="reply-daily"><button class="btn small primary" type="submit" aria-label="Envoyer">↵</button></form>'
     + '</div>';
 }
+const BELL = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>';
 function renderHomeColoc(){
   applyPageTheme(null);
   document.body.setAttribute("style", "");
@@ -1756,6 +1822,7 @@ function renderHomeColoc(){
   const title = (s.title || DEFAULT_SETTINGS.title).trim();
   const words = title.split(/\s+/);
   const gifts = state.items.filter(isWrapped);
+  const nUnread = notifications().filter(n => n.at > (state.notifRead || 0)).length;
   const both = people();
   const seenBoth = state.items.filter(i => both.length > 1 && both.every(p => (i.seenBy || []).includes(p))).length;
   const words_n = state.items.reduce((n, i) => n + (i.replies || []).length, 0) + state.lists.reduce((n, l) => n + (l.replies || []).length, 0);
@@ -1764,7 +1831,7 @@ function renderHomeColoc(){
   const daily = dailyPick();
   const lastPoster = [...state.items].filter(i => !isWrapped(i) && (i.posterUrl || i.photoId) && (!daily || i.id !== daily.id)).sort((a,b) => (b.createdAt||0) - (a.createdAt||0))[0];
   const nav = '<nav class="cnav"><div class="clogo">'+esc(words.slice(0, Math.ceil(words.length/2)).join(" "))+'<br>'+esc(words.slice(Math.ceil(words.length/2)).join(" "))+'</div>'
-    + '<div class="clinks"><a href="#domaines" data-act="scroll-domains">Domaines</a><a href="#cadeaux" data-act="open-gifts">Cadeaux'+(gifts.length ? '<b>'+gifts.length+'</b>' : '')+'</a><a href="#a-regarder" data-act="open-watch">À regarder</a><a href="#favoris" data-act="open-fav">Favoris</a><a href="#" data-act="reglages">Réglages</a></div>'
+    + '<div class="clinks"><a href="#domaines" data-act="scroll-domains">Domaines</a><a href="#cadeaux" data-act="open-gifts">Cadeaux'+(gifts.length ? '<b>'+gifts.length+'</b>' : '')+'</a><a href="#a-regarder" data-act="open-watch">À regarder</a><a href="#favoris" data-act="open-fav">Favoris</a><a href="#" data-act="reglages">Réglages</a><a href="#" data-act="notifs-all" class="nbell" aria-label="Notifications">'+BELL+(nUnread ? '<b>'+nUnread+'</b>' : '')+'</a></div>'
     + '<button class="btn primary" data-act="add">'+PAW+' Ajouter</button></nav>';
   const stack = '<div class="cstack">'
     + '<div class="perch">'+CAT_SVG("cat")+'</div>'
@@ -1783,7 +1850,7 @@ function renderHomeColoc(){
 
   const cats = sortedCats();
   const shares = state.items.length;
-  let h = letterHTML(s) + '<section class="nums">'
+  let h = notifStripHTML() + letterHTML(s) + '<section class="nums">'
     + '<a class="num" href="#cadeaux" data-act="open-gifts"><b>'+gifts.length+'</b><span>'+(gifts.length > 1 ? "cadeaux" : "cadeau")+' à ouvrir</span></a>'
     + '<div class="num"><b>'+shares+'</b><span>'+(shares > 1 ? "partages" : "partage")+' de colocataires</span></div></section>';
   h += '<section class="ticket"><div class="tin"><h3>Ce qu\'on s\'est envoyé</h3><h2>Ces 7 derniers jours</h2>'+weekHTML()+'</div></section>';
@@ -3088,6 +3155,8 @@ document.addEventListener("click", e => {
   if(act === "edit-list"){ const l = listById(el.dataset.id); if(l) listForm(l); return; }
   if(act === "settings"){ settingsForm(); return; }
   if(act === "reglages"){ reglagesForm(); return; }
+  if(act === "notifs-read"){ markNotifsRead(); render(); return; }
+  if(act === "notifs-all"){ e.preventDefault && e.preventDefault(); notifsModal(); return; }
   if(act === "tt-play"){ const it = state.items.find(i => i.id === el.dataset.id); if(it) playTikTok(it); return; }
   if(act === "change-pw"){ passwordForm(); return; }
   if(act === "rich-more"){ const card = el.closest(".card"); if(card){ const open = card.classList.toggle("rich-open"); el.textContent = open ? "Replier" : "Lire tout"; } return; }
