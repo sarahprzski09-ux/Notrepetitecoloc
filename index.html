@@ -580,6 +580,48 @@ a.num:hover{outline:2px solid var(--deep)}
   .chead{flex-wrap:wrap}
 }
 
+/* photo du jour plus petite, affichage ajusté */
+.ctitle{font-size:clamp(3.6rem,9vw,7.4rem)}
+.cscript{top:clamp(8rem,18vw,15rem)}
+.cstack{min-height:410px;margin-top:30px;max-width:520px;justify-self:end;width:100%}
+.pol.big{width:min(260px,56%);right:6%;top:30px}
+.pol.small{width:min(150px,32%);top:200px;left:4%}
+.cstack .perch{width:104px;right:calc(6% + 70px);top:-26px}
+.sticker.s1{width:108px;height:108px;font-size:1.35rem;right:0;top:0}
+.nums{grid-template-columns:repeat(2,minmax(0,1fr));max-width:720px}
+.num{padding:14px 20px;display:flex;align-items:baseline;gap:12px}
+.num b{font-size:2.6rem}
+@media (max-width:860px){
+  .chero{gap:0}
+  .cstack{justify-self:center;max-width:420px;min-height:380px}
+}
+@media (max-width:520px){
+  .ctitle{font-size:clamp(3.4rem,17vw,5rem)}
+  .cscript{font-size:2.8rem;top:clamp(6.5rem,32vw,9rem);right:2%}
+  .cstack{min-height:330px;margin-top:22px}
+  .pol.big{width:56%;right:4%;top:24px;padding:9px 9px 38px}
+  .pol.small{width:36%;top:150px;left:2%;padding:8px 8px 34px}
+  .pol figcaption{font-size:1.15rem}
+  .cstack .perch{width:86px;right:calc(4% + 40px);top:-28px}
+  .sticker.s1{width:90px;height:90px;font-size:1.1rem}
+  .nums{gap:10px}
+  .num{display:grid;gap:0;padding:12px 16px}
+  .num b{font-size:2.2rem}
+  .num span{font-size:.64rem}
+}
+@media (max-width:520px){
+  html[data-skin="coloc"] .topbar{font-size:.72rem;gap:0;flex-wrap:nowrap}
+  html[data-skin="coloc"] .topbar [data-act="reglages"]{display:none}
+  html[data-skin="coloc"] .topbar .icon-btn{padding:3px 5px}
+  html[data-skin="coloc"] .cnav{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .clinks{grid-column:1/-1;flex-wrap:nowrap;overflow-x:auto;gap:18px;padding:2px 0 6px;white-space:nowrap;scrollbar-width:none}
+  .clinks::-webkit-scrollbar{display:none}
+  .clogo{font-size:1.15rem}
+  html[data-skin="coloc"] .cnav .btn{padding:8px 14px}
+  .chero .intro{margin-top:6px}
+}
+@media (max-width:520px){ html[data-skin="coloc"] .cnav .btn{grid-column:2;grid-row:1;justify-self:end} .clinks{grid-row:2} }
+
 </style>
 
 </head>
@@ -1414,11 +1456,10 @@ function renderHomeColoc(){
     + stack + '</header>';
 
   const cats = sortedCats();
+  const shares = state.items.length;
   let h = '<section class="nums">'
     + '<a class="num" href="#cadeaux" data-act="open-gifts"><b>'+gifts.length+'</b><span>'+(gifts.length > 1 ? "cadeaux" : "cadeau")+' à ouvrir</span></a>'
-    + '<div class="num"><b>'+seenBoth+'</b><span>vus à deux</span></div>'
-    + '<div class="num"><b>'+words_n+'</b><span>'+(words_n > 1 ? "petits mots" : "petit mot")+'</span></div>'
-    + '<div class="num"><b>'+days+'</b><span>'+(days > 1 ? "jours" : "jour")+' de coloc</span></div></section>';
+    + '<div class="num"><b>'+shares+'</b><span>'+(shares > 1 ? "partages" : "partage")+' de colocataires</span></div></section>';
   h += '<section class="ticket"><div class="tin"><h3>Ce qu\'on s\'est envoyé</h3><h2>Ces 7 derniers jours</h2>'+weekHTML()+'</div></section>';
   h += '<div class="chead" id="domaines"><h2>Nos domaines</h2><button class="btn small" data-act="new-domain">+ Nouveau domaine</button></div><div class="ccards">';
   for(const c of cats){
@@ -1807,15 +1848,15 @@ function itemForm(it, preset){
       + sortedCats().map(c => '<option value="'+esc(c.id)+'"'+(c.id===it.cat?' selected':'')+'>'+esc(c.name)+'</option>').join("") + '</select></div>'
     + '<div class="field" style="flex:1 1 180px"><label for="f-list" id="f-list-lbl">Rangé dans</label><select id="f-list"></select></div></div>'
     + '<div class="field"><label for="f-title">Titre</label><input type="text" id="f-title" maxlength="200" value="'+esc(it.title||"")+'" placeholder="Le nom du film, du morceau… (facultatif)"></div>'
-    + '<div class="field"><label for="f-url">Lien</label><input type="url" id="f-url" value="'+esc(it.url||"")+'" placeholder="https://… (facultatif)"><span class="help">Musique : colle un lien Spotify ou Tidal, l\'autre pourra l\'ouvrir sur son appli à elle.</span></div>'
-    + '<div class="field"><label for="f-why">Pourquoi</label><textarea id="f-why" maxlength="4000" placeholder="Ce que j\'en ai pensé, pourquoi j\'ai envie de te le partager… (facultatif)">'+esc(it.why||"")+'</textarea></div>'
-    + '<div class="field"><label for="f-note">Pourquoi ça m\'a fait penser à toi</label><textarea id="f-note" maxlength="4000" placeholder="(facultatif)">'+esc(it.note||"")+'</textarea></div>'
-    + '<div class="field"><span class="lbl">Mood</span><div class="row" id="f-moods"></div><div class="row"><input type="text" id="f-newmood" maxlength="40" placeholder="Nouveau mood"><button type="button" class="btn small" id="f-addmood">Ajouter</button></div></div>'
     + '<div class="field"><span class="lbl">Affiche ou pochette</span>'
     +   '<div class="row"><select id="f-pkind" aria-label="Type">'+Object.entries(POSTER_KINDS).map(([k,v]) => '<option value="'+k+'">'+v.label+'</option>').join("")+'</select>'
     +   '<button type="button" class="btn small" id="f-psearch">Chercher avec le titre</button></div>'
     +   '<div id="f-pres" class="pres"></div><div id="f-pcur"></div>'
-    +   '<span class="help">Pour un lien YouTube, la miniature s\'affiche toute seule.</span></div>'
+    +   '<span class="help">Des affiches te sont proposées pendant que tu tapes le titre. Pour un lien YouTube, la miniature s\'affiche toute seule.</span></div>'
+    + '<div class="field"><label for="f-url">Lien</label><input type="url" id="f-url" value="'+esc(it.url||"")+'" placeholder="https://… (facultatif)"><span class="help">Musique : colle un lien Spotify ou Tidal, l\'autre pourra l\'ouvrir sur son appli à elle.</span></div>'
+    + '<div class="field"><label for="f-why">Pourquoi</label><textarea id="f-why" maxlength="4000" placeholder="Ce que j\'en ai pensé, pourquoi j\'ai envie de te le partager… (facultatif)">'+esc(it.why||"")+'</textarea></div>'
+    + '<div class="field"><label for="f-note">Pourquoi ça m\'a fait penser à toi</label><textarea id="f-note" maxlength="4000" placeholder="(facultatif)">'+esc(it.note||"")+'</textarea></div>'
+    + '<div class="field"><span class="lbl">Mood</span><div class="row" id="f-moods"></div><div class="row"><input type="text" id="f-newmood" maxlength="40" placeholder="Nouveau mood"><button type="button" class="btn small" id="f-addmood">Ajouter</button></div></div>'
     + photoInputHTML("Photo perso", "f-photo")
     + '<div class="sheet-actions">'+(editing ? '<button type="button" class="btn ghost" id="f-del">Supprimer</button>' : '')
     + '<button type="button" class="btn" data-act="close">Annuler</button><button type="submit" class="btn primary" id="f-save">Enregistrer</button></div></form>';
@@ -1858,17 +1899,27 @@ function itemForm(it, preset){
     const drawPoster = () => { pcur.innerHTML = posterUrl ? '<div class="pcur"><img src="'+esc(posterUrl)+'" alt="Affiche choisie" referrerpolicy="no-referrer"><button type="button" class="btn ghost" id="f-prm">Retirer l\'affiche</button></div>' : ''; };
     drawPoster();
     pcur.addEventListener("click", e => { if(e.target.id === "f-prm"){ posterUrl = null; drawPoster(); } });
-    sheet.querySelector("#f-psearch").addEventListener("click", async () => {
-      const term = sheet.querySelector("#f-title").value.trim();
-      if(!term){ toast("Écris d'abord le titre."); sheet.querySelector("#f-title").focus(); return; }
-      pres.innerHTML = '<p class="help">Recherche…</p>';
+    let autoTimer = null, lastTerm = "";
+    const titleIn = sheet.querySelector("#f-title");
+    titleIn.addEventListener("input", () => {
+      clearTimeout(autoTimer);
+      const term = titleIn.value.trim();
+      if(posterUrl || term.length < 3 || term === lastTerm) return;
+      autoTimer = setTimeout(() => { lastTerm = term; runSearch(true); }, 700);
+    });
+    pkind.addEventListener("change", () => { if(titleIn.value.trim().length >= 3) runSearch(true); });
+    const runSearch = async (auto) => {
+      const term = titleIn.value.trim();
+      if(!term){ if(!auto){ toast("Écris d'abord le titre."); titleIn.focus(); } return; }
+      pres.innerHTML = '<p class="help">'+(auto ? 'Je cherche des affiches…' : 'Recherche…')+'</p>';
       try{
         const res = await searchPosters(term, pkind.value);
         pres.innerHTML = res.length ? res.map((r, i) => '<button type="button" class="pres-item" data-i="'+i+'"><img src="'+esc(r.url)+'" alt="" loading="lazy" referrerpolicy="no-referrer"><span>'+esc(r.title)+'</span><small>'+esc(r.sub)+'</small></button>').join("")
           : '<p class="help">Rien trouvé. Essaie un autre type ou une autre orthographe.</p>';
-        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; posterUrl = res[+b.dataset.i].url; pres.innerHTML = ""; drawPoster(); };
+        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; pres.innerHTML = ""; drawPoster(); };
       }catch(err){ pres.innerHTML = '<p class="help">La recherche ne répond pas. Vérifie ta connexion et réessaie.</p>'; }
-    });
+    };
+    sheet.querySelector("#f-psearch").addEventListener("click", () => runSearch(false));
     if(preset && preset.pickPhoto){ const fi = sheet.querySelector("#f-photo"); if(fi) try{ fi.click(); }catch(e){} }
     if(editing) sheet.querySelector("#f-del").addEventListener("click", () => confirmBox("Supprimer ?", "« "+(it.title || (it.note||"").slice(0,60) || "Cet élément")+" » disparaîtra pour vous deux.", () => { W.delItem(it.id).catch(() => {}); toast("Supprimé."); }));
     sheet.querySelector("#itemForm").addEventListener("submit", e => {
