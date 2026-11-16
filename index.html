@@ -771,6 +771,22 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
   html[data-skin="coloc"] .card.gift:hover{box-shadow:0 16px 34px rgba(30,40,25,.18)}
 }
 @media (prefers-reduced-motion:reduce){html[data-skin="coloc"] .card:hover,html[data-skin="coloc"] .card:hover img.poster{transform:none !important}}
+/* Petit mot d'accueil pleine largeur */
+.letter{position:relative;background:var(--card);border:2px solid var(--ink);border-radius:22px;padding:22px 28px 18px;margin:0 0 26px;box-shadow:6px 6px 0 var(--accent);background-image:repeating-linear-gradient(transparent 0 31px,var(--grid) 31px 32px);background-position:0 14px}
+.letter .lhead{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.letter .lstamp{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;font-size:1.1rem;border:2px solid var(--ink);transform:rotate(-8deg);flex:none}
+.letter h2{margin:0;font-family:var(--display);font-weight:400;font-size:1.6rem;color:var(--deep);line-height:1.05}
+.letter .ltext{font-family:var(--body);font-size:1.05rem;line-height:32px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:96px;overflow:hidden;cursor:pointer;-webkit-mask:linear-gradient(#000 45%,transparent);mask:linear-gradient(#000 45%,transparent)}
+.letter.open .ltext{max-height:none;cursor:default;-webkit-mask:none;mask:none}
+.letter .intro-toggle{margin-top:6px;background:var(--deep);color:#fff;border-color:var(--deep)}
+.letter.open .intro-toggle{background:var(--card);color:var(--ink);border-color:var(--line)}
+.pastille{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 12px 5px 10px;border-radius:999px;border:2px solid var(--ink)}
+.pastille::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff;animation:pastPulse 1.4s ease-in-out infinite}
+.letter.unread{animation:letterNudge 4s ease-in-out 1s infinite}
+@keyframes pastPulse{50%{transform:scale(1.6);opacity:.5}}
+@keyframes letterNudge{0%,88%,100%{transform:none}91%{transform:rotate(-.6deg)}94%{transform:rotate(.6deg)}97%{transform:rotate(-.3deg)}}
+@media (max-width:640px){.letter{padding:16px 16px 14px;border-radius:18px}.letter h2{font-size:1.25rem}.letter .ltext{font-size:.98rem}}
+@media (prefers-reduced-motion:reduce){.letter.unread,.pastille::before{animation:none}}
 
 </style>
 
@@ -785,7 +801,7 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
 <script>
-const APP_VERSION = "16/11 à 12h23";
+const APP_VERSION = "16/11 à 12h33";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1460,7 +1476,7 @@ document.addEventListener("submit", async e => {
   if(f.id === "introForm"){
     e.preventDefault();
     const intro = $("#i-body").value.trim();
-    W.setSettings({subtitle: $("#i-sub").value.trim(), intro}).catch(() => {});
+    W.setSettings({subtitle: $("#i-sub").value.trim(), intro, ...(intro !== (state.settings.intro || "") ? {introBy: state.me} : {})}).catch(() => {});
     state.editIntro = false; if(intro) state.introOpen = true; render(); return;
   }
   const rf = f.closest && f.closest("form[data-reply]");
@@ -1642,7 +1658,7 @@ function renderHomeColoc(){
 
   const cats = sortedCats();
   const shares = state.items.length;
-  let h = '<section class="nums">'
+  let h = letterHTML(s) + '<section class="nums">'
     + '<a class="num" href="#cadeaux" data-act="open-gifts"><b>'+gifts.length+'</b><span>'+(gifts.length > 1 ? "cadeaux" : "cadeau")+' à ouvrir</span></a>'
     + '<div class="num"><b>'+shares+'</b><span>'+(shares > 1 ? "partages" : "partage")+' de colocataires</span></div></section>';
   h += '<section class="ticket"><div class="tin"><h3>Ce qu\'on s\'est envoyé</h3><h2>Ces 7 derniers jours</h2>'+weekHTML()+'</div></section>';
@@ -1983,13 +1999,27 @@ function introHTML(s){
       + '<label class="lbl" for="i-body">Texte qui se déplie (facultatif)</label><textarea id="i-body" maxlength="6000" placeholder="Un mot d\'accueil plus long, une dédicace…">'+esc(s.intro||"")+'</textarea>'
       + '<div class="row"><button type="button" class="btn small" data-act="intro-cancel">Annuler</button><button type="submit" class="btn small primary">Enregistrer</button></div></form>';
   }
-  const hasIntro = !!(s.intro && s.intro.trim());
   return '<div class="intro"><p class="sub">'+esc(s.subtitle || "")+'</p>'
-    + '<div class="intro-tools">'
-    + (hasIntro ? '<button class="intro-toggle" data-act="intro-toggle" aria-expanded="'+!!state.introOpen+'">'+(state.introOpen ? "Replier" : "Lire la suite")+'<svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5 L6 6.5 L11 1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' : '')
-    + '<button class="icon-btn" data-act="intro-edit" aria-label="Modifier le petit mot">Modifier</button></div>'
-    + (hasIntro && state.introOpen ? '<div class="intro-body">'+esc(s.intro)+'</div>' : '')
+    + '<div class="intro-tools"><button class="icon-btn" data-act="intro-edit" aria-label="Modifier le petit mot">Modifier</button></div>'
     + '</div>';
+}
+function introSig(s){ const t = (s.intro || "").trim(); let h = 0; for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return t.length + ":" + h; }
+function introUnread(s){
+  s = s || state.settings;
+  if(!(s.intro && s.intro.trim()) || (s.introBy && s.introBy === state.me)) return false;
+  return LS.get("coin.introRead." + state.me) !== introSig(s);
+}
+function markIntroRead(){ try{ LS.set("coin.introRead." + state.me, introSig(state.settings)); }catch(e){} }
+/* Le petit mot d'accueil : pleine largeur, début visible, pastille tant qu'il n'a pas été ouvert */
+function letterHTML(s){
+  if(state.editIntro || !(s.intro && s.intro.trim())) return "";
+  const open = !!state.introOpen, unread = introUnread(s);
+  const from = s.introBy ? "Un petit mot de " + s.introBy : "Un petit mot pour toi";
+  return '<section class="letter'+(open ? ' open' : '')+(unread ? ' unread' : '')+'">'
+    + '<div class="lhead"><span class="lstamp" aria-hidden="true">♡</span><h2>'+esc(from)+'</h2>'+(unread ? '<span class="pastille">À lire</span>' : '')+'</div>'
+    + '<div class="ltext" data-act="intro-toggle">'+esc(s.intro)+'</div>'
+    + '<button class="intro-toggle" data-act="intro-toggle" aria-expanded="'+open+'">'+(open ? "Replier" : "Lire la suite")+'<svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5 L6 6.5 L11 1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
+    + '</section>';
 }
 
 function moodbarHTML(pool){
@@ -2391,7 +2421,7 @@ function settingsForm(){
       const oldMe = state.me, idx = ppl.indexOf(oldMe);
       const np = [p1 || ppl[0], p2 || ppl[1]];
       if(idx >= 0 && np[idx] !== oldMe){ state.me = np[idx]; LS.set(storeKey("me"), state.me); }
-      W.setSettings({title: sheet.querySelector("#s-title").value.trim(), subtitle: sheet.querySelector("#s-sub").value.trim(), intro: sheet.querySelector("#s-intro").value.trim(), people: np}).catch(() => {});
+      W.setSettings({title: sheet.querySelector("#s-title").value.trim(), subtitle: sheet.querySelector("#s-sub").value.trim(), intro: sheet.querySelector("#s-intro").value.trim(), ...(sheet.querySelector("#s-intro").value.trim() !== (state.settings.intro || "") ? {introBy: state.me} : {}), people: np}).catch(() => {});
       closeModal();
     });
   });
@@ -2536,7 +2566,7 @@ document.addEventListener("click", e => {
   if(act === "edit-list"){ const l = listById(el.dataset.id); if(l) listForm(l); return; }
   if(act === "settings"){ settingsForm(); return; }
   if(act === "reglages"){ reglagesForm(); return; }
-  if(act === "intro-toggle"){ state.introOpen = !state.introOpen; render(); return; }
+  if(act === "intro-toggle"){ state.introOpen = !state.introOpen; if(state.introOpen) markIntroRead(); render(); return; }
   if(act === "intro-edit"){ state.editIntro = true; render(); const i = document.getElementById("i-sub"); if(i) i.focus(); return; }
   if(act === "intro-cancel"){ state.editIntro = false; render(); return; }
   if(act === "switch-me"){ state.phase = "who"; renderGate(); return; }
