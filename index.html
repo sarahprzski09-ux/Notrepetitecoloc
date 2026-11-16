@@ -715,6 +715,19 @@ input[type=checkbox]{accent-color:var(--deep)}
 .fp-opt small{font-size:1rem;color:var(--muted);line-height:1.2}
 .pnote{grid-column:1/-1;color:var(--deep);font-weight:600}
 
+/* fiches un peu plus compactes */
+html[data-skin="coloc"] .wall{grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:20px 16px}
+html[data-skin="coloc"] .card{padding:16px 14px 10px;gap:6px}
+html[data-skin="coloc"] .card img.poster{max-height:280px}
+html[data-skin="coloc"] .card img.poster.wide{max-height:none}
+html[data-skin="coloc"] .card h3{font-size:1.02rem}
+html[data-skin="coloc"] .card .note{font-size:1.15rem}
+html[data-skin="coloc"] .card.gift,html[data-skin="coloc"] .card.gift .gift-open{min-height:180px}
+@media (max-width:520px){html[data-skin="coloc"] .wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px}
+  html[data-skin="coloc"] .card{padding:12px 10px 8px}
+  html[data-skin="coloc"] .card img.poster{max-height:220px}
+  html[data-skin="coloc"] .card .links .btn{font-size:.62rem;padding:6px 10px}}
+
 </style>
 
 </head>
