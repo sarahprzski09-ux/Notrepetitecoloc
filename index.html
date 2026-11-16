@@ -1767,7 +1767,7 @@ async function fromTVmaze(term){
 async function fromDeezer(term, what){
   const j = await jsonp("https://api.deezer.com/search/" + what + "?q=" + encodeURIComponent(term) + "&limit=12&output=jsonp");
   return (j && j.data || []).map(r => what === "track" ? {url:r.album && (r.album.cover_xl || r.album.cover_big), title:r.title, link:r.link, sub:[r.artist && r.artist.name, r.album && r.album.title, "titre"].filter(Boolean).join(" · ")}
-    : {url:r.cover_xl || r.cover_big, title:r.title, link:r.link, sub:[r.artist && r.artist.name, "album"].filter(Boolean).join(" · ")}).filter(r => r.url);
+    : {url:r.cover_xl || r.cover_big, title:r.title, link:r.link, single: r.record_type === "single", sub:[r.artist && r.artist.name, r.record_type === "single" ? "pochette du single" : "album"].filter(Boolean).join(" · ")}).filter(r => r.url);
 }
 async function fromOpenLibrary(term){
   const j = await fetchJSON("https://openlibrary.org/search.json?q=" + encodeURIComponent(term) + "&limit=12&fields=title,author_name,first_publish_year,cover_i");
@@ -1782,13 +1782,27 @@ async function fromITunes(term, kind){
   }));
 }
 let searchNotes = [];
+const VARIANT = /remix|mix\b|version|live|acoustic|acoustique|instrumental|karaok|sped|slowed|edit\b|demo/i;
+function singlesFirst(term, list){
+  const t = term.toLowerCase().trim(), wantsVariant = VARIANT.test(t);
+  const score = r => {
+    const title = (r.title || "").toLowerCase();
+    let s = 0;
+    if(r.single) s += 4;
+    if(title === t || title.replace(/\s*\(.*?\)|\s*-\s.*$/g, "").trim() === t) s += 3;
+    else if(title.includes(t)) s += 1;
+    if(!wantsVariant && VARIANT.test(title)) s -= 5;
+    return s;
+  };
+  return list.map((r, i) => ({r, i, s: score(r)})).sort((a, b) => b.s - a.s || a.i - b.i).map(x => x.r);
+}
 async function searchPosters(term, kind){
   searchNotes = [];
   if((kind === "movie" || kind === "tv") && !tmdbKey()) searchNotes.push("Aucune clé TMDB enregistrée : ajoute-la dans Réglages pour de meilleures affiches de films.");
   const jobs = {
     movie:   [() => fromTMDB(term, "movie"), () => fromITunes(term, "movie")],
     tv:      [() => fromTMDB(term, "tv"), () => fromTVmaze(term), () => fromITunes(term, "tv")],
-    music:   [() => fromDeezer(term, "track"), () => fromDeezer(term, "album"), () => fromITunes(term, "music")],
+    music:   [() => fromDeezer(term, "album"), () => fromDeezer(term, "track"), () => fromITunes(term, "music")],
     album:   [() => fromDeezer(term, "album"), () => fromITunes(term, "album")],
     song:    [() => fromDeezer(term, "track"), () => fromITunes(term, "song")],
     ebook:   [() => fromOpenLibrary(term), () => fromITunes(term, "ebook")],
@@ -1798,7 +1812,7 @@ async function searchPosters(term, kind){
   const seen = new Set(), out = [];
   settled.forEach(s => { if(s.status === "fulfilled") s.value.forEach(r => { const k = r.url + "|" + (r.title || "").toLowerCase(); if(r.url && !seen.has(k)){ seen.add(k); out.push(r); } }); });
   if(!out.length && settled.every(s => s.status === "rejected")) throw new Error("aucune source");
-  return out.slice(0, 24);
+  return (kind === "music" || kind === "song" || kind === "album" ? singlesFirst(term, out) : out).slice(0, 24);
 }
 function ytId(u){
   try{
