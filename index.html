@@ -728,6 +728,19 @@ html[data-skin="coloc"] .card.gift,html[data-skin="coloc"] .card.gift .gift-open
   html[data-skin="coloc"] .card img.poster{max-height:220px}
   html[data-skin="coloc"] .card .links .btn{font-size:.62rem;padding:6px 10px}}
 
+/* bouton retour bien cliquable, et toujours à portée en faisant défiler */
+html[data-skin="coloc"] .crumb{position:sticky;top:10px;z-index:30;display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:8px 18px 8px 14px;margin:4px 0 10px;background:var(--card);color:var(--deep);border-radius:999px;box-shadow:0 4px 16px rgba(30,40,25,.14);font-family:var(--body);font-weight:800;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;cursor:pointer}
+html[data-skin="coloc"] .crumb:hover{background:var(--deep);color:#fff;text-decoration:none}
+html[data-skin="coloc"] .crumb:focus-visible{outline:3px solid var(--deep);outline-offset:3px}
+html[data-skin="coloc"] .hero{position:relative}
+html[data-skin="coloc"] .hero h1{position:relative;z-index:1}
+html[data-skin="coloc"] .crumb{position:relative;top:auto}
+.backfab{position:fixed;left:16px;bottom:16px;z-index:40;display:inline-flex;align-items:center;min-height:46px;padding:10px 20px;border-radius:999px;background:var(--deep);color:#fff;font-family:var(--body);font-weight:800;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;box-shadow:0 8px 24px rgba(30,40,25,.25)}
+.backfab:hover{filter:brightness(1.1)}
+.backfab:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media (prefers-reduced-motion:no-preference){.backfab{animation:fabin .25s ease-out}}
+@keyframes fabin{from{transform:translateY(20px);opacity:0}}
+
 </style>
 
 </head>
@@ -1513,6 +1526,7 @@ function render(){
   else if(skinNow() === "coloc") renderHomeColoc();
   else renderHome();
   $("#head").insertAdjacentHTML("afterbegin", topbar());
+  if(state.route.page !== "home") $("#head").insertAdjacentHTML("beforeend", '<a class="backfab" href="#" data-act="'+(state.route.page === "list" ? "open-domain" : "home")+'"'+(state.route.page === "list" ? ' data-id="'+esc((listById(state.route.id)||{}).cat||"")+'"' : '')+' aria-label="Retour">'+(state.route.page === "list" ? "← Retour" : "← Accueil")+'</a>');
   renderMovebar(); renderSync(); hydratePhotos();
   document.querySelectorAll(".week").forEach(w => { w.scrollLeft = w.scrollWidth; });
 }
@@ -1523,7 +1537,7 @@ function startOfDay(ts){ const d = new Date(ts); d.setHours(0,0,0,0); return d.g
 function toWatch(){ return state.items.filter(i => isMedia(i) && i.author !== state.me && !(i.seenBy || []).includes(state.me)).sort((a,b) => (b.createdAt||0) - (a.createdAt||0)); }
 function renderPick(title, sub, items, empty){
   applyPageTheme(null);
-  $("#head").innerHTML = '<header class="hero"><a class="crumb" href="#" data-act="home">← Accueil</a><h1>'+esc(title)+'</h1><p class="sub">'+esc(sub)+'</p></header>';
+  $("#head").innerHTML = '<header class="hero"><a class="crumb" href="#" data-act="home" aria-label="Retour à l\'accueil">← Accueil</a><h1>'+esc(title)+'</h1><p class="sub">'+esc(sub)+'</p></header>';
   $("#main").innerHTML = items.length ? wallHTML(items, "fav") : emptyHTML(title, empty);
 }
 function openDay(t){
@@ -1865,7 +1879,7 @@ function renderDomain(c){
   const th = themeOf(c);
   applyPageTheme(th, patternOf(c));
   const word = listWord(c), one = listWordOne(c);
-  $("#head").innerHTML = '<header class="hero"><a class="crumb" href="#" data-act="home">← Tous les domaines</a>'
+  $("#head").innerHTML = '<header class="hero"><a class="crumb" href="#" data-act="home" aria-label="Retour à l\'accueil">← Tous les domaines</a>'
     + (c.coverId ? photoTag(c.coverId, "banner", "") : '')
     + '<h1>'+esc(c.name)+'</h1>'
     + (c.desc ? '<p class="sub">'+esc(c.desc)+'</p>' : '')
@@ -1918,7 +1932,7 @@ function renderList(l){
 
 function renderFav(){
   applyPageTheme(THEMES.fraise, "coeurs");
-  $("#head").innerHTML = '<header class="hero"><a class="crumb" href="#" data-act="home">← Tous les domaines</a><h1>Mes favoris</h1><p class="sub">Ce que tu as marqué d\'un cœur.</p></header>';
+  $("#head").innerHTML = '<header class="hero"><a class="crumb" href="#" data-act="home" aria-label="Retour à l\'accueil">← Tous les domaines</a><h1>Mes favoris</h1><p class="sub">Ce que tu as marqué d\'un cœur.</p></header>';
   const items = state.items.filter(i => (i.favBy||[]).includes(state.me));
   let h = moodbarHTML(items);
   let shown = [...items].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
