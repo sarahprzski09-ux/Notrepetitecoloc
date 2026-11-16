@@ -823,6 +823,12 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 .pwmeter[data-level="1"] i{width:45%;background:#e8a33b}
 .pwmeter[data-level="2"] i{width:72%;background:#9bbf5a}
 .pwmeter[data-level="3"] i{width:100%;background:var(--deep)}
+.myfonts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.myfont{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--ink);border-radius:999px;padding:4px 6px 4px 14px;background:var(--card)}
+.myfont b{font-weight:400;font-size:1.15rem}
+.myfont small{font-size:.65rem;color:var(--muted)}
+.fontup{position:relative;overflow:hidden;cursor:pointer;justify-self:start}
+.fontup input{position:absolute;inset:0;opacity:0;cursor:pointer}
 
 </style>
 
@@ -847,7 +853,7 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 
 </script>
 <script>
-const APP_VERSION = "16/11 à 12h52";
+const APP_VERSION = "16/11 à 12h58";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1251,6 +1257,7 @@ function syncFromData(){
   state.cats = Array.isArray(d.cats) ? d.cats : [];
   state.lists = Array.isArray(d.lists) ? d.lists : [];
   state.items = Array.isArray(d.items) ? d.items : [];
+  registerCustomFonts();
 }
 const people = () => (state.settings.people || []).filter(Boolean);
 
@@ -2609,6 +2616,97 @@ function settingsForm(){
 }
 
 function fontSample(group){ return group === "display" ? "Été à deux" : group === "hand" ? "un petit mot pour toi ♡" : "Des petites choses, été, cœur"; }
+
+/* ---------- Polices importées (fichiers chiffrés dans le dépôt) ---------- */
+const customFontState = {loaded: new Set(), loading: new Set()};
+function registerCustomFonts(){
+  ["display","body","hand"].forEach(g => Object.keys(FONTS[g]).forEach(k => { if(k.startsWith("cf_")) delete FONTS[g][k]; }));
+  (state.settings.customFonts || []).forEach(f => {
+    ["display","body","hand"].forEach(g => { FONTS[g]["cf_" + f.id] = {label: f.name, css: '"cf-' + f.id + '"'}; });
+    loadCustomFont(f);
+  });
+}
+async function loadCustomFont(f){
+  if(customFontState.loaded.has(f.id) || customFontState.loading.has(f.id) || !state.key || !window.FontFace) return;
+  customFontState.loading.add(f.id);
+  try{
+    const file = await getFile(state.repo, state.token, f.path);
+    if(file.status !== 200) throw new Error("absent");
+    const bytes = await decryptAny(file.bytes);
+    const face = new FontFace("cf-" + f.id, bytes.buffer, f.noDigits ? {unicodeRange: "U+0000-002F, U+003A-10FFFF", display: "swap"} : {display: "swap"});
+    await face.load(); document.fonts.add(face); customFontState.loaded.add(f.id);
+  }catch(e){} finally { customFontState.loading.delete(f.id); }
+}
+const FONT_EXT = /\.(ttf|otf|woff2?)$/i;
+function isFontBytes(b){
+  if(!b || b.length < 4) return false;
+  const tag = String.fromCharCode(b[0], b[1], b[2], b[3]);
+  return tag === "wOF2" || tag === "wOFF" || tag === "OTTO" || tag === "true" || (b[0] === 0 && b[1] === 1 && b[2] === 0 && b[3] === 0);
+}
+async function inflateRaw(bytes){
+  if(!window.DecompressionStream) throw new Error("Ton navigateur ne sait pas ouvrir les zip : importe directement le fichier .ttf ou .otf.");
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function unzipFonts(buf){
+  const b = new Uint8Array(buf), dv = new DataView(buf);
+  let eocd = -1;
+  for(let i = b.length - 22; i >= Math.max(0, b.length - 65557); i--){ if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; } }
+  if(eocd < 0) throw new Error("Ce zip semble abîmé.");
+  const count = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true);
+  const out = [];
+  for(let n = 0; n < count; n++){
+    if(dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(b.subarray(p + 46, p + 46 + nlen));
+    p += 46 + nlen + xlen + clen;
+    const base = name.split("/").pop();
+    if(!FONT_EXT.test(base) || /(^|\/)(__MACOSX|\.)/.test(name) || base.startsWith(".")) continue;
+    const ds = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true);
+    const raw = b.subarray(ds, ds + csize);
+    const data = method === 0 ? raw.slice() : method === 8 ? await inflateRaw(raw) : null;
+    if(data && isFontBytes(data)) out.push({name: base, bytes: data});
+  }
+  return out;
+}
+function prettyFontName(file){
+  return file.replace(FONT_EXT, "").replace(/[-_]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/\b(demo|personal use|free|trial)\b/gi, "").replace(/\s+/g, " ").trim().replace(/\b\w/g, c => c.toUpperCase()) || "Ma police";
+}
+/* Les polices de démo remplacent souvent les chiffres par un logo : on le repère en comparant « 0 » et « 7 » */
+async function digitsAreWatermark(bytes){
+  try{
+    const fam = "cftest" + uid().replace(/\W/g, "");
+    const face = new FontFace(fam, bytes.slice().buffer); await face.load(); document.fonts.add(face);
+    const draw = ch => { const c = document.createElement("canvas"); c.width = 120; c.height = 60; const x = c.getContext("2d"); x.font = '40px "' + fam + '"'; x.fillText(ch, 4, 44); return {w: Math.round(x.measureText(ch).width), d: c.toDataURL()}; };
+    const a = draw("0"), z = draw("7"), m = draw("M");
+    document.fonts.delete(face);
+    return a.d === z.d || (a.w === z.w && a.w > m.w * 1.6);
+  }catch(e){ return false; }
+}
+async function importFonts(files, progress){
+  let fonts = [];
+  for(const file of files){
+    const buf = await file.arrayBuffer();
+    if(/\.zip$/i.test(file.name) || new Uint8Array(buf.slice(0, 2))[0] === 0x50) fonts = fonts.concat(await unzipFonts(buf));
+    else { const u = new Uint8Array(buf); if(isFontBytes(u)) fonts.push({name: file.name, bytes: u}); }
+  }
+  if(!fonts.length) throw new Error("Aucune police trouvée : il faut un fichier .ttf, .otf, .woff, .woff2 ou un zip qui en contient.");
+  const added = [];
+  for(const f of fonts){
+    if(f.bytes.length > 4 * 1024 * 1024){ continue; }
+    progress("Envoi de « " + prettyFontName(f.name) + " »…");
+    const id = uid().replace(/\W/g, "").slice(0, 12);
+    const path = "fonts/" + id + ".enc";
+    const noDigits = await digitsAreWatermark(f.bytes);
+    await putFile(state.repo, state.token, path, await encryptBytes(state.key, f.bytes), null, "police");
+    added.push({id, name: prettyFontName(f.name), path, noDigits});
+  }
+  if(!added.length) throw new Error("Ces fichiers sont trop lourds (plus de 4 Mo).");
+  await W.setSettings({customFonts: [...(state.settings.customFonts || []), ...added]});
+  return added;
+}
+
 function fontPicker(group, key, cur){
   const f = FONTS[group][cur] || Object.values(FONTS[group])[0];
   return '<div class="fpick" data-group="'+group+'" data-key="'+key+'"><button type="button" class="fp-btn" aria-haspopup="listbox" aria-expanded="false"><span style="font-family:'+esc(f.css || "inherit")+'">'+esc(f.label)+'</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5 L6 6.5 L11 1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>'
@@ -2736,6 +2834,8 @@ function reglagesForm(){
     + '<div class="field" style="flex:1 1 170px"><span class="lbl">Police du texte</span>'+fontPicker("body", "fontBody", look.fontBody)+'</div>'
     + '<div class="field" style="flex:1 1 170px"><span class="lbl">Police des petits mots</span>'+fontPicker("hand", "fontHand", look.fontHand)+'</div></div>'
     + '<div class="font-sample"><strong>Titre d\'exemple</strong><span>Un texte pour voir comment ça rend.</span><em>Et un petit mot écrit à la main ♡</em></div>'
+    + '<div class="field"><span class="lbl">Mes polices</span><div class="myfonts">'+((state.settings.customFonts || []).map(f => '<span class="myfont"><b style="font-family:&quot;cf-'+esc(f.id)+'&quot;">'+esc(f.name)+'</b>'+(f.noDigits ? '<small>chiffres remplacés</small>' : '')+'<button type="button" class="chip-x" data-delfont="'+esc(f.id)+'" aria-label="Retirer la police '+esc(f.name)+'">×</button></span>').join("") || '<span class="help">Aucune pour l\'instant.</span>')+'</div>'
+    + '<label class="btn small fontup">Importer une police (zip, ttf, otf, woff)<input type="file" id="r-fontfile" accept=".zip,.ttf,.otf,.woff,.woff2,font/*,application/zip" multiple></label><span class="help" id="r-fontmsg">Elle apparaîtra dans les trois menus de police. Si c\'est une version de démo avec un logo à la place des chiffres, les chiffres s\'afficheront dans une autre police.</span></div>'
     + '<h3 class="subhead">Recherche d\'affiches</h3>'
     + '<div class="field"><label for="r-tmdb">Clé TMDB (affiches de films et séries en français)</label><input type="text" id="r-tmdb" autocomplete="off" spellcheck="false" value="'+esc(state.settings.tmdbKey || "")+'" placeholder="Facultatif : colle ta clé API ici"><span class="help">Sans clé, les séries, la musique et les livres marchent quand même. Les films passent alors par Apple, qui en trouve moins.</span></div>'
     + '<h3 class="subhead">Couleurs de l\'appli</h3>'
@@ -2747,6 +2847,20 @@ function reglagesForm(){
     + '<p class="help">Chiffrement AES-256, clé tirée du mot de passe avec '+(state.config && state.config.kdf === "argon2id" ? 'Argon2id (protection renforcée).' : 'PBKDF2. En changeant le mot de passe, tu passes à Argon2id, plus résistant.')+'</p>'
     + '<div class="row"><button type="button" class="btn small" data-act="change-pw">Changer le mot de passe</button><button type="button" class="btn small ghost" data-act="logout">Se déconnecter de cet appareil</button></div>'
     + '<div class="sheet-actions"><button type="button" class="btn" id="r-cancel">Annuler</button><button type="submit" class="btn primary">Appliquer</button></div></form>', sheet => {
+    const ff = sheet.querySelector("#r-fontfile"), fmsg = sheet.querySelector("#r-fontmsg");
+    ff.addEventListener("change", async () => {
+      const files = [...(ff.files || [])]; if(!files.length) return;
+      ff.disabled = true;
+      try{ const added = await importFonts(files, t => { fmsg.textContent = t; }); toast(added.length > 1 ? added.length + " polices ajoutées ♡" : "Police « " + added[0].name + " » ajoutée ♡"); state.previewLook = false; closeModal(); reglagesForm(); }
+      catch(err){ fmsg.textContent = err.status === 401 ? "La clé GitHub ne fonctionne plus." : (err.message && !/^\d+$/.test(err.message) ? err.message : "L'envoi a échoué, réessaie."); ff.disabled = false; ff.value = ""; }
+    });
+    sheet.querySelector(".myfonts").addEventListener("click", e => {
+      const x = e.target.closest("[data-delfont]"); if(!x) return;
+      if(x.dataset.armed !== "1"){ x.dataset.armed = "1"; x.textContent = "Retirer ?"; x.classList.add("armed"); setTimeout(() => { if(x.isConnected){ x.dataset.armed = ""; x.textContent = "×"; x.classList.remove("armed"); } }, 3000); return; }
+      const id = x.dataset.delfont;
+      W.setSettings({customFonts: (state.settings.customFonts || []).filter(f => f.id !== id)}).catch(() => {});
+      state.previewLook = false; closeModal(); reglagesForm(); toast("Police retirée.");
+    });
     const colBox = sheet.querySelector("#r-colors");
     const drawColors = () => { colBox.innerHTML = COLOR_FIELDS.map(([k, label]) => '<label class="colorfield"><input type="color" data-col="'+k+'" value="'+look.colors[k]+'"><span>'+esc(label)+'</span></label>').join(""); };
     drawColors();
