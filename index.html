@@ -847,7 +847,7 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 
 </script>
 <script>
-const APP_VERSION = "16/11 à 12h49";
+const APP_VERSION = "16/11 à 12h52";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1723,7 +1723,7 @@ function renderHomeColoc(){
     + (daily ? polaroid(photoTag(daily.photoId, "", daily.title || "Photo du jour"), "photo du jour ♡", "big", 'data-act="show-item" data-id="'+esc(daily.id)+'" role="button" tabindex="0"')
              : '<button class="pol big empty" data-act="add-photo"><span class="ptape" aria-hidden="true"></span><span class="ph-empty">'+ICONS.camera+'<span>Ajoute une photo :<br>chaque jour, l\'une d\'elles s\'affichera ici.</span></span><figcaption>photo du jour ♡</figcaption></button>')
     + (daily ? dailyBubble(daily) : '')
-    + (lastPoster ? polaroid(lastPoster.posterUrl ? '<img src="'+esc(safeImg(lastPoster.posterUrl) || "")+'" alt="" referrerpolicy="no-referrer">' : photoTag(lastPoster.photoId, "", ""), (lastPoster.title || "").toLowerCase().slice(0, 28), "small", 'data-act="show-item" data-id="'+esc(lastPoster.id)+'" role="button" tabindex="0"') : '')
+    + (lastPoster ? polaroid(lastPoster.posterUrl ? '<img src="'+esc(safeImg(lastPoster.posterUrl) || "")+'" alt="" referrerpolicy="no-referrer">' : photoTag(lastPoster.photoId, "", ""), (lastPoster.title || "").slice(0, 28), "small", 'data-act="show-item" data-id="'+esc(lastPoster.id)+'" role="button" tabindex="0"') : '')
     + (gifts.length ? '<a href="#cadeaux" data-act="open-gifts" class="stk-link">'+STICKER(plural(gifts.length, "cadeau", "cadeaux")+'<br>à ouvrir', "s1")+'</a>' : STICKER("coucou ♡", "s1"))
     + '</div>';
   $("#head").innerHTML = nav + '<header class="chero">'
@@ -1754,7 +1754,7 @@ function renderHomeColoc(){
   const tw = toWatch();
   const twp = tw.filter(i => !isWrapped(i) && (i.posterUrl || ytId(i.url))).slice(0, 2);
   h += '<section class="watchbox"><div class="wl"><small>Films · séries · sons</small><h2>Ta liste<br>à regarder</h2><p>'+(tw.length ? plural(tw.length, "chose conseillée", "choses conseillées")+' que tu n\'as pas encore cochée'+(tw.length > 1 ? 's' : '')+' « vu ».' : 'Tout est vu pour le moment. Bravo.')+'</p><a class="btn primary" href="#a-regarder" data-act="open-watch">Voir la liste</a></div>'
-    + '<div class="wr">'+(twp.length ? twp.map((i, k) => polaroid('<img src="'+esc(safeImg(posterOf(i)) || "")+'" alt="" referrerpolicy="no-referrer">', (i.title||"").toLowerCase().slice(0, 24), "w"+k, 'data-act="show-item" data-id="'+esc(i.id)+'" role="button" tabindex="0"')).join("") : '<span class="wr-empty">'+ICONS.film+'</span>')+'</div></section>';
+    + '<div class="wr">'+(twp.length ? twp.map((i, k) => polaroid('<img src="'+esc(safeImg(posterOf(i)) || "")+'" alt="" referrerpolicy="no-referrer">', (i.title||"").slice(0, 24), "w"+k, 'data-act="show-item" data-id="'+esc(i.id)+'" role="button" tabindex="0"')).join("") : '<span class="wr-empty">'+ICONS.film+'</span>')+'</div></section>';
   const latest = [...state.items].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,6);
   if(latest.length) h += '<div class="chead"><h2>Derniers petits trucs</h2></div>' + wallHTML(latest, "home");
   $("#main").innerHTML = h;
@@ -2032,6 +2032,7 @@ function ytId(u){
   return null;
 }
 const posterOf = it => it.posterUrl || (ytId(it.url) ? "https://i.ytimg.com/vi/" + ytId(it.url) + "/hqdefault.jpg" : null);
+const capFirst = t => { t = String(t || ""); return t.charAt(0).toLocaleUpperCase("fr") + t.slice(1); };
 const safeImg = u => /^https:\/\//.test(u || "") ? u : null;
 
 const TEXT_CAT_RE = /moment|anecdote|nous|deux|souvenir|histoire|journal|lettre|mot|r[ée]cit|vie/i;
@@ -2155,7 +2156,7 @@ function moodbarHTML(pool){
   const moods = state.moods.filter(m => used.has(m)).concat([...used].filter(m => !state.moods.includes(m)));
   if(!moods.length) return "";
   return '<div class="moodbar"><span class="label">mood :</span>' + moods.map(m =>
-    '<button class="chip'+(state.mood===m?'':' off')+'" data-act="mood" data-m="'+esc(m)+'" aria-pressed="'+(state.mood===m)+'">'+esc(m)+'</button>').join("")
+    '<button class="chip'+(state.mood===m?'':' off')+'" data-act="mood" data-m="'+esc(m)+'" aria-pressed="'+(state.mood===m)+'">'+esc(capFirst(m))+'</button>').join("")
     + (state.mood ? '<button class="btn ghost" data-act="mood" data-m="">tout afficher</button>' : '') + '</div>';
 }
 
@@ -2279,7 +2280,7 @@ function cardHTML(it, idx, ctx){
       return '<label class="seenbox'+(on?' on':'')+(mine?'':' other')+'"><input type="checkbox" data-seen="'+esc(it.id)+'"'+(on?' checked':'')+(mine?'':' disabled')+'><span class="tick" aria-hidden="true"></span>'+esc(p)+'</label>';
     }).join("") + '</div>';
   }
-  if((it.moods||[]).length) h += '<div class="moods">' + it.moods.map(m => '<button class="chip" data-act="mood" data-m="'+esc(m)+'">'+esc(m)+'</button>').join("") + '</div>';
+  if((it.moods||[]).length) h += '<div class="moods">' + it.moods.map(m => '<button class="chip" data-act="mood" data-m="'+esc(m)+'">'+esc(capFirst(m))+'</button>').join("") + '</div>';
   h += '<footer><span class="who">'+(it.author ? 'de '+esc(it.author)+' · ' : '')+esc(fmtDate(it.createdAt))+'</span>'
     + '<button class="icon-btn fav" data-act="fav" data-id="'+esc(it.id)+'" aria-pressed="'+!!mine+'" aria-label="'+(mine?'Retirer des favoris':'Ajouter aux favoris')+'">'+HEART+'</button>'
     + '<button class="icon-btn" data-act="edit" data-id="'+esc(it.id)+'">Modifier</button>'
@@ -2407,7 +2408,7 @@ function itemForm(it, preset){
     const moodsBox = sheet.querySelector("#f-moods");
     const drawMoods = () => {
       const all = [...new Set([...state.moods, ...sel])];
-      moodsBox.innerHTML = all.map(m => '<span class="chipwrap"><button type="button" class="chip'+(sel.has(m)?'':' off')+'" aria-pressed="'+sel.has(m)+'" data-m="'+esc(m)+'">'+esc(m)+'</button><button type="button" class="chip-x" data-delmood="'+esc(m)+'" aria-label="Supprimer le mood '+esc(m)+' partout">×</button></span>').join("") || '<span class="help">Pas encore de mood : crée le premier juste en dessous.</span>';
+      moodsBox.innerHTML = all.map(m => '<span class="chipwrap"><button type="button" class="chip'+(sel.has(m)?'':' off')+'" aria-pressed="'+sel.has(m)+'" data-m="'+esc(m)+'">'+esc(capFirst(m))+'</button><button type="button" class="chip-x" data-delmood="'+esc(m)+'" aria-label="Supprimer le mood '+esc(m)+' partout">×</button></span>').join("") || '<span class="help">Pas encore de mood : crée le premier juste en dessous.</span>';
     };
     drawMoods();
     moodsBox.addEventListener("click", e => {
@@ -2419,7 +2420,7 @@ function itemForm(it, preset){
       }
       const b = e.target.closest("[data-m]"); if(!b) return; const m = b.dataset.m; sel.has(m) ? sel.delete(m) : sel.add(m); drawMoods(); });
     const addMood = () => {
-      const inp = sheet.querySelector("#f-newmood"); const m = inp.value.trim().toLowerCase(); if(!m) return;
+      const inp = sheet.querySelector("#f-newmood"); let m = inp.value.trim(); if(!m) return; const ex = state.moods.find(x => x.toLowerCase() === m.toLowerCase()); if(ex) m = ex;
       sel.add(m); inp.value = ""; drawMoods();
       if(!state.moods.includes(m)) W.addMood(m).catch(() => {});
     };
@@ -2592,7 +2593,7 @@ function settingsForm(){
     + '<div class="field"><span class="lbl">Moods</span><div class="row" id="s-moods"></div><span class="help">La croix supprime le mood de la liste et de toutes les cartes.</span></div>'
     + '<div class="sheet-actions"><button type="button" class="btn" data-act="close">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>', sheet => {
     const box = sheet.querySelector("#s-moods");
-    const draw = () => { box.innerHTML = state.moods.map(m => '<button type="button" class="chip" data-m="'+esc(m)+'" aria-label="Supprimer le mood '+esc(m)+'">'+esc(m)+' ×</button>').join("") || '<span class="help">Aucun pour l\'instant.</span>'; };
+    const draw = () => { box.innerHTML = state.moods.map(m => '<button type="button" class="chip" data-m="'+esc(m)+'" aria-label="Supprimer le mood '+esc(m)+'">'+esc(capFirst(m))+' ×</button>').join("") || '<span class="help">Aucun pour l\'instant.</span>'; };
     draw();
     box.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if(!b) return; W.delMood(b.dataset.m).catch(() => {}); setTimeout(draw, 50); });
     sheet.querySelector("#setForm").addEventListener("submit", e => {
