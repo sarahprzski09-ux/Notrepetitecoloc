@@ -1707,6 +1707,7 @@ function giftHTML(it, idx, ctx){
 const POSTER_KINDS = {
   movie:  {label:"Film",    q:"media=movie&entity=movie"},
   tv:     {label:"Série",   q:"media=tvShow&entity=tvSeason"},
+  music:  {label:"Musique", q:"media=music&entity=song"},
   album:  {label:"Album",   q:"media=music&entity=album"},
   song:   {label:"Morceau", q:"media=music&entity=song"},
   ebook:  {label:"Livre",   q:"media=ebook&entity=ebook"},
@@ -1716,7 +1717,7 @@ function guessKind(cat){
   const n = (cat && cat.name || "").toLowerCase();
   if(/s[ée]rie/.test(n)) return "tv";
   if(/film|cin[ée]/.test(n)) return "movie";
-  if(/musi|album|son|playlist|chanson/.test(n)) return "album";
+  if(/musi|album|son|playlist|chanson/.test(n)) return "music";
   if(/livre|lecture|book/.test(n)) return "ebook";
   if(/podcast/.test(n)) return "podcast";
   return "movie";
@@ -1751,8 +1752,8 @@ async function fromTVmaze(term){
 }
 async function fromDeezer(term, what){
   const j = await jsonp("https://api.deezer.com/search/" + what + "?q=" + encodeURIComponent(term) + "&limit=12&output=jsonp");
-  return (j && j.data || []).map(r => what === "track" ? {url:r.album && (r.album.cover_xl || r.album.cover_big), title:r.title, sub:[r.artist && r.artist.name, "Deezer"].filter(Boolean).join(" · ")}
-    : {url:r.cover_xl || r.cover_big, title:r.title, sub:[r.artist && r.artist.name, "Deezer"].filter(Boolean).join(" · ")}).filter(r => r.url);
+  return (j && j.data || []).map(r => what === "track" ? {url:r.album && (r.album.cover_xl || r.album.cover_big), title:r.title, link:r.link, sub:[r.artist && r.artist.name, r.album && r.album.title, "titre"].filter(Boolean).join(" · ")}
+    : {url:r.cover_xl || r.cover_big, title:r.title, link:r.link, sub:[r.artist && r.artist.name, "album"].filter(Boolean).join(" · ")}).filter(r => r.url);
 }
 async function fromOpenLibrary(term){
   const j = await fetchJSON("https://openlibrary.org/search.json?q=" + encodeURIComponent(term) + "&limit=12&fields=title,author_name,first_publish_year,cover_i");
@@ -1763,7 +1764,7 @@ async function fromITunes(term, kind){
   const data = await jsonp("https://itunes.apple.com/search?term=" + encodeURIComponent(term) + "&" + k.q + "&country=FR&limit=12");
   return (data && data.results || []).filter(r => r.artworkUrl100).map(r => ({
     url: r.artworkUrl100.replace(/\/\d+x\d+(bb|cc)?\.(jpg|png|webp)$/i, "/600x600bb.jpg"),
-    title: r.trackName || r.collectionName || "", sub: [r.artistName, yr(r.releaseDate), "Apple"].filter(Boolean).join(" · ")
+    title: r.trackName || r.collectionName || "", link: r.trackViewUrl || r.collectionViewUrl, sub: [r.artistName, yr(r.releaseDate), "Apple"].filter(Boolean).join(" · ")
   }));
 }
 let searchNotes = [];
@@ -1773,6 +1774,7 @@ async function searchPosters(term, kind){
   const jobs = {
     movie:   [() => fromTMDB(term, "movie"), () => fromITunes(term, "movie")],
     tv:      [() => fromTMDB(term, "tv"), () => fromTVmaze(term), () => fromITunes(term, "tv")],
+    music:   [() => fromDeezer(term, "track"), () => fromDeezer(term, "album"), () => fromITunes(term, "music")],
     album:   [() => fromDeezer(term, "album"), () => fromITunes(term, "album")],
     song:    [() => fromDeezer(term, "track"), () => fromITunes(term, "song")],
     ebook:   [() => fromOpenLibrary(term), () => fromITunes(term, "ebook")],
@@ -1780,9 +1782,9 @@ async function searchPosters(term, kind){
   }[kind] || [() => fromTMDB(term, "movie"), () => fromITunes(term, "movie")];
   const settled = await Promise.allSettled(jobs.map(j => j()));
   const seen = new Set(), out = [];
-  settled.forEach(s => { if(s.status === "fulfilled") s.value.forEach(r => { if(r.url && !seen.has(r.url)){ seen.add(r.url); out.push(r); } }); });
+  settled.forEach(s => { if(s.status === "fulfilled") s.value.forEach(r => { const k = r.url + "|" + (r.title || "").toLowerCase(); if(r.url && !seen.has(k)){ seen.add(k); out.push(r); } }); });
   if(!out.length && settled.every(s => s.status === "rejected")) throw new Error("aucune source");
-  return out.slice(0, 18);
+  return out.slice(0, 24);
 }
 function ytId(u){
   try{
@@ -2097,7 +2099,7 @@ function itemForm(it, preset){
         const notes = searchNotes.length ? '<p class="help pnote">'+searchNotes.map(esc).join("<br>")+'</p>' : '';
         pres.innerHTML = notes + (res.length ? res.map((r, i) => '<button type="button" class="pres-item" data-i="'+i+'"><img src="'+esc(r.url)+'" alt="" loading="lazy" referrerpolicy="no-referrer"><span>'+esc(r.title)+'</span><small>'+esc(r.sub)+'</small></button>').join("")
           : '<p class="help">Rien trouvé. Essaie un autre type ou une autre orthographe.</p>');
-        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; pres.innerHTML = ""; drawPoster(); };
+        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; const urlIn = sheet.querySelector("#f-url"); if(r.link && urlIn && !urlIn.value.trim() && (pkind.value === "music" || pkind.value === "song" || pkind.value === "album")) urlIn.value = r.link; if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; pres.innerHTML = ""; drawPoster(); };
       }catch(err){ pres.innerHTML = '<p class="help">La recherche ne répond pas. '+(searchNotes.length ? searchNotes.map(esc).join(" ") : 'Vérifie ta connexion et réessaie.')+'</p>'; }
     };
     sheet.querySelector("#f-psearch").addEventListener("click", () => runSearch(false));
