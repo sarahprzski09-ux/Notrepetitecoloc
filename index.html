@@ -787,6 +787,36 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 @keyframes letterNudge{0%,88%,100%{transform:none}91%{transform:rotate(-.6deg)}94%{transform:rotate(.6deg)}97%{transform:rotate(-.3deg)}}
 @media (max-width:640px){.letter{padding:16px 16px 14px;border-radius:18px}.letter h2{font-size:1.25rem}.letter .ltext{font-size:.98rem}}
 @media (prefers-reduced-motion:reduce){.letter.unread,.pastille::before{animation:none}}
+/* Domaines « textes et images » : formulaire */
+.sheet .text-only,.sheet .text-only-i{display:none}
+.sheet.mode-text .text-only{display:grid}
+.sheet.mode-text .text-only-i{display:inline}
+.sheet.mode-text .media-only,.sheet.mode-text .media-only-i{display:none}
+.rtb{display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:var(--t1);border:2px solid var(--ink);border-bottom:none;border-radius:14px 14px 0 0;padding:6px;position:sticky;top:-2px;z-index:2}
+.rtb button,.rtb-file{font:inherit;font-size:.8rem;font-weight:700;border:1.5px solid transparent;background:var(--card);color:var(--ink);border-radius:8px;padding:5px 9px;cursor:pointer;line-height:1.1}
+.rtb button:hover,.rtb-file:hover{border-color:var(--ink)}
+.rtb-file{position:relative;overflow:hidden;display:inline-block}
+.rtb-file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.rtb-sep{width:1px;align-self:stretch;background:var(--line);margin:0 2px}
+.redit{min-height:180px;max-height:55vh;overflow:auto;border:2px solid var(--ink);border-radius:0 0 14px 14px;background:var(--card);padding:12px 14px;outline:none}
+.redit:focus{box-shadow:0 0 0 3px var(--t2)}
+.redit:empty::before{content:attr(data-ph);color:var(--muted)}
+/* Texte mis en forme (formulaire + fiches) */
+.rich{font-size:1rem;line-height:1.55;overflow-wrap:anywhere}
+.rich>*:first-child{margin-top:0}.rich>*:last-child{margin-bottom:0}
+.rich p{margin:0 0 .6em}
+.rich h3{font-family:var(--display);font-weight:400;color:var(--deep);font-size:1.35rem;margin:.6em 0 .3em;line-height:1.1}
+.rich h4{font-size:1rem;font-weight:800;margin:.6em 0 .25em;color:var(--deep)}
+.rich ul,.rich ol{margin:0 0 .6em;padding-left:1.3em}
+.rich blockquote{margin:.4em 0 .7em;padding:6px 12px;border-left:4px solid var(--accent);background:var(--t1);border-radius:0 10px 10px 0;font-style:italic}
+.rich mark{background:#fff1a8;padding:0 2px;border-radius:3px;color:inherit}
+.rich a{color:var(--deep);text-underline-offset:3px}
+.rich img{display:block;max-width:100%;height:auto;border-radius:12px;margin:.5em auto;border:2px solid var(--ink)}
+.card .rich{max-height:320px;overflow:hidden}
+.card.rich-long:not(.rich-open) .rich{-webkit-mask:linear-gradient(#000 70%,transparent);mask:linear-gradient(#000 70%,transparent)}
+.card.rich-open .rich{max-height:none}
+.rich-more{display:none;justify-self:start;font:inherit;font-size:.8rem;font-weight:800;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.card.rich-long .rich-more{display:inline-block}
 
 </style>
 
@@ -801,7 +831,7 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
 <script>
-const APP_VERSION = "16/11 à 12h33";
+const APP_VERSION = "16/11 à 12h40";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1304,6 +1334,10 @@ const photoTag = (id, cls, alt) => {
   const url = state.photos.get(id);
   return '<img class="'+cls+'" data-photo="'+esc(id)+'" alt="'+esc(alt||"")+'" draggable="false"'+(url ? ' src="'+url+'"' : '')+'>';
 };
+function markRichOverflow(){
+  document.querySelectorAll(".card .rich").forEach(r => { const card = r.closest(".card"); if(card) card.classList.toggle("rich-long", r.scrollHeight > r.clientHeight + 6 || card.classList.contains("rich-open")); });
+}
+document.addEventListener("load", e => { if(e.target && e.target.closest && e.target.closest(".rich")) markRichOverflow(); }, true);
 function hydratePhotos(){
   document.querySelectorAll("img[data-photo]:not([src])").forEach(async img => {
     const id = img.dataset.photo;
@@ -1575,7 +1609,7 @@ function render(){
   else renderHome();
   $("#head").insertAdjacentHTML("afterbegin", topbar());
   if(state.route.page !== "home") $("#head").insertAdjacentHTML("beforeend", '<a class="backfab" href="#" data-act="'+(state.route.page === "list" ? "open-domain" : "home")+'"'+(state.route.page === "list" ? ' data-id="'+esc((listById(state.route.id)||{}).cat||"")+'"' : '')+' aria-label="Retour">'+(state.route.page === "list" ? "← Retour" : "← Accueil")+'</a>');
-  renderMovebar(); renderSync(); hydratePhotos();
+  renderMovebar(); renderSync(); hydratePhotos(); markRichOverflow();
   document.querySelectorAll(".week").forEach(w => { w.scrollLeft = w.scrollWidth; });
 }
 
@@ -1613,7 +1647,7 @@ function weekHTML(){
 function polaroid(content, caption, cls, attrs){ return '<figure class="pol '+(cls||"")+'" '+(attrs||"")+'><span class="ptape" aria-hidden="true"></span>'+content+'<figcaption>'+esc(caption)+'</figcaption></figure>'; }
 const STICKER = (txt, cls) => '<span class="sticker '+(cls||"")+'">'+txt+'</span>';
 function dailyBubble(it){
-  const text = it.note || it.why || "";
+  const text = it.note || it.why || (it.rich ? richText(it.rich).slice(0, 220) : "");
   const reps = Array.isArray(it.replies) ? it.replies : [];
   const shown = reps.slice(-2);
   return '<div class="dbubble">'
@@ -1957,6 +1991,56 @@ function ytId(u){
 const posterOf = it => it.posterUrl || (ytId(it.url) ? "https://i.ytimg.com/vi/" + ytId(it.url) + "/hqdefault.jpg" : null);
 const safeImg = u => /^https:\/\//.test(u || "") ? u : null;
 
+const TEXT_CAT_RE = /moment|anecdote|nous|deux|souvenir|histoire|journal|lettre|mot|r[ée]cit|vie/i;
+function isTextCat(c){ if(!c) return false; if(c.kind === "text") return true; if(c.kind === "media") return false; return TEXT_CAT_RE.test(c.name || "") && !/film|s[ée]rie|musi|youtube|tiktok/i.test(c.name || ""); }
+/* Texte mis en forme : on ne garde que des balises sûres */
+const RICH_TAGS = {P:"p",DIV:"p",BR:"br",B:"b",STRONG:"b",I:"i",EM:"i",U:"u",S:"s",STRIKE:"s",DEL:"s",H1:"h3",H2:"h3",H3:"h3",H4:"h4",UL:"ul",OL:"ol",LI:"li",BLOCKQUOTE:"blockquote",A:"a",IMG:"img",MARK:"mark",FIGURE:"p",SPAN:""};
+function sanitizeRich(html){
+  const src = document.createElement("div"); src.innerHTML = String(html || "");
+  const walk = (node, out) => {
+    node.childNodes.forEach(n => {
+      if(n.nodeType === 3){ out.appendChild(document.createTextNode(n.nodeValue)); return; }
+      if(n.nodeType !== 1) return;
+      let tag = RICH_TAGS[n.tagName];
+      if(n.tagName === "SPAN" || n.tagName === "FONT"){
+        const st = (n.getAttribute("style") || "") + (n.tagName === "FONT" ? "" : "");
+        if(/font-weight:\s*(bold|[6-9]00)/i.test(st)){ const b = document.createElement("b"); walk(n, b); out.appendChild(b); return; }
+        if(/font-style:\s*italic/i.test(st)){ const i = document.createElement("i"); walk(n, i); out.appendChild(i); return; }
+        if(/background-color/i.test(st)){ const m = document.createElement("mark"); walk(n, m); out.appendChild(m); return; }
+        walk(n, out); return;
+      }
+      if(tag === undefined){ if(!/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|svg|SVG|TEMPLATE)$/.test(n.tagName)) walk(n, out); return; }
+      if(tag === "") { walk(n, out); return; }
+      if(tag === "img"){
+        const pid = n.getAttribute("data-photo"), url = n.getAttribute("src") || "";
+        const img = document.createElement("img");
+        if(pid && /^[\w-]+$/.test(pid)) img.setAttribute("data-photo", pid);
+        else if(/^https:\/\//.test(url)) img.setAttribute("src", url);
+        else return;
+        out.appendChild(img); return;
+      }
+      const el = document.createElement(tag);
+      if(tag === "a"){ const h = n.getAttribute("href") || ""; if(/^https?:\/\//.test(h)) el.setAttribute("href", h); else { walk(n, out); return; } }
+      walk(n, el); out.appendChild(el);
+    });
+  };
+  const out = document.createElement("div"); walk(src, out);
+  out.querySelectorAll("p").forEach(p => { if(!p.textContent.trim() && !p.querySelector("img,br")) p.remove(); });
+  return out.innerHTML.trim();
+}
+function richText(html){ const d = document.createElement("div"); d.innerHTML = String(html || "").replace(/<(br|\/p|\/li|\/h3|\/h4|\/blockquote)[^>]*>/gi, "$& "); return (d.textContent || "").replace(/\s+/g, " ").trim(); }
+function richHTML(html){
+  const clean = sanitizeRich(html);
+  const d = document.createElement("div"); d.innerHTML = clean;
+  d.querySelectorAll("img").forEach(img => {
+    img.setAttribute("alt", ""); img.setAttribute("loading", "lazy"); img.setAttribute("draggable", "false");
+    const pid = img.getAttribute("data-photo");
+    if(pid && state.photos.get(pid)) img.setAttribute("src", state.photos.get(pid));
+    if(!pid) img.setAttribute("referrerpolicy", "no-referrer");
+  });
+  d.querySelectorAll("a").forEach(a => { a.setAttribute("target", "_blank"); a.setAttribute("rel", "noopener noreferrer"); });
+  return d.innerHTML;
+}
 function isMedia(it){
   if(it.url || it.posterUrl) return true;
   const c = catById(it.cat);
@@ -2125,7 +2209,7 @@ function cardHTML(it, idx, ctx){
   const rot = ((idx % 3) - 1) * 0.8;
   const mbtns = musicButtons(it), hasPlatforms = !!mbtns;
   const li = it.url && !hasPlatforms ? linkInfo(it.url) : null;
-  const isMot = !it.title && !li && !it.photoId && !it.posterUrl;
+  const isMot = !it.title && !li && !it.photoId && !it.posterUrl && !it.rich;
   const mine = (it.favBy||[]).includes(state.me);
   const favNames = (it.favBy||[]).filter(Boolean);
   const where = (ctx === "home" || ctx === "fav") ? (c ? c.name : "") + (l ? " · " + l.name : "") : (l && ctx === "mood" ? l.name : "");
@@ -2140,6 +2224,7 @@ function cardHTML(it, idx, ctx){
   if(it.title) h += '<h3>'+esc(it.title)+'</h3>';
   if(it.artist) h += '<p class="artist">'+esc(it.artist)+'</p>';
   if(hasPlatforms) h += mbtns;
+  if(it.rich) h += '<div class="rich">'+richHTML(it.rich)+'</div><button type="button" class="rich-more" data-act="rich-more">Lire tout</button>';
   const both = it.why && it.note;
   if(it.why) h += '<div class="notebox why">'+(both || !it.title ? '<span class="nlabel">Pourquoi</span>' : '')+'<p class="note">'+esc(it.why)+'</p></div>';
   if(it.note) h += '<div class="notebox">'+(both ? '<span class="nlabel">Ça m\'a fait penser à toi</span>' : '')+'<p class="note">'+esc(it.note)+'</p></div>';
@@ -2204,6 +2289,7 @@ function itemForm(it, preset){
       + sortedCats().map(c => '<option value="'+esc(c.id)+'"'+(c.id===it.cat?' selected':'')+'>'+esc(c.name)+'</option>').join("") + '</select></div>'
     + '<div class="field" style="flex:1 1 180px"><label for="f-list" id="f-list-lbl">Rangé dans</label><select id="f-list"></select></div></div>'
     + '<div class="field"><label for="f-title">Titre</label><input type="text" id="f-title" maxlength="200" value="'+esc(it.title||"")+'" placeholder="Le nom du film, du morceau… (facultatif)"></div>'
+    + '<div class="media-only">'
     + '<div class="field"><label for="f-artist">Artiste, réalisateur, auteur…</label><input type="text" id="f-artist" maxlength="120" value="'+esc(it.artist||"")+'" placeholder="(facultatif)"></div>'
     + '<div class="field"><span class="lbl">Affiche ou pochette</span>'
     +   '<div class="row"><select id="f-pkind" aria-label="Type">'+Object.entries(POSTER_KINDS).map(([k,v]) => '<option value="'+k+'">'+v.label+'</option>').join("")+'</select>'
@@ -2213,8 +2299,21 @@ function itemForm(it, preset){
     + '<div class="field"><label for="f-url">Lien</label><input type="url" id="f-url" value="'+esc(it.url||"")+'" placeholder="https://… (facultatif)"><span class="help">Musique : colle un lien Spotify ou Tidal, l\'autre pourra l\'ouvrir sur son appli à elle.</span></div>'
     + '<div class="field"><label for="f-why">Pourquoi</label><textarea id="f-why" maxlength="4000" placeholder="Ce que j\'en ai pensé, pourquoi j\'ai envie de te le partager… (facultatif)">'+esc(it.why||"")+'</textarea></div>'
     + '<div class="field"><label for="f-note">Pourquoi ça m\'a fait penser à toi</label><textarea id="f-note" maxlength="4000" placeholder="(facultatif)">'+esc(it.note||"")+'</textarea></div>'
+    + '</div>'
+    + '<div class="text-only field"><span class="lbl">Texte</span>'
+    +   '<div class="rtb" role="toolbar" aria-label="Mise en forme">'
+    +     '<button type="button" data-cmd="bold" title="Gras"><b>G</b></button><button type="button" data-cmd="italic" title="Italique"><i>I</i></button><button type="button" data-cmd="underline" title="Souligné"><u>S</u></button><button type="button" data-cmd="strikeThrough" title="Barré"><s>B</s></button>'
+    +     '<span class="rtb-sep"></span><button type="button" data-cmd="formatBlock" data-val="h3" title="Grand titre">Titre</button><button type="button" data-cmd="formatBlock" data-val="h4" title="Petit titre">Sous-titre</button><button type="button" data-cmd="formatBlock" data-val="p" title="Texte normal">¶</button>'
+    +     '<button type="button" data-cmd="hiliteColor" title="Surligner">Surligner</button>'
+    +     '<span class="rtb-sep"></span><button type="button" data-cmd="insertUnorderedList" title="Liste à puces">• Liste</button><button type="button" data-cmd="insertOrderedList" title="Liste numérotée">1. Liste</button><button type="button" data-cmd="formatBlock" data-val="blockquote" title="Citation">« »</button>'
+    +     '<span class="rtb-sep"></span><button type="button" data-cmd="link" title="Lien">Lien</button><button type="button" data-cmd="imgurl" title="Image depuis un lien">Image (lien)</button><label class="rtb-file" title="Importer une image">Importer une image<input type="file" accept="image/*" id="f-rimg"></label>'
+    +     '<button type="button" data-cmd="removeFormat" title="Effacer la mise en forme">Effacer</button>'
+    +   '</div>'
+    +   '<div class="redit rich" id="f-rich" contenteditable="true" data-ph="Raconte… Tu peux mettre en forme le texte et glisser des images au milieu.">'+(it.rich ? richHTML(it.rich) : '')+'</div>'
+    +   '<span class="help" id="f-rhelp">Les images importées sont chiffrées comme les photos.</span>'
+    + '</div>'
     + '<div class="field"><span class="lbl">Mood</span><div class="row" id="f-moods"></div><div class="row"><input type="text" id="f-newmood" maxlength="40" placeholder="Nouveau mood"><button type="button" class="btn small" id="f-addmood">Ajouter</button></div></div>'
-    + photoInputHTML("Photo perso", "f-photo")
+    + photoInputHTML('<span class="media-only-i">Photo perso</span><span class="text-only-i">Image de couverture (facultatif)</span>', "f-photo")
     + '<div class="sheet-actions">'+(editing ? '<button type="button" class="btn ghost" id="f-del">Supprimer</button>' : '')
     + '<button type="button" class="btn" data-act="close">Annuler</button><button type="submit" class="btn primary" id="f-save">Enregistrer</button></div></form>';
   openModal(html, sheet => {
@@ -2227,6 +2326,41 @@ function itemForm(it, preset){
     };
     drawLists(it.list);
     catSel.addEventListener("change", () => drawLists(null));
+    const setMode = () => { const t = isTextCat(catById(catSel.value)); sheet.classList.toggle("mode-text", t); sheet.querySelector("#f-title").placeholder = t ? "Un titre pour ce souvenir (facultatif)" : "Le nom du film, du morceau… (facultatif)"; };
+    setMode(); catSel.addEventListener("change", setMode);
+    const ed = sheet.querySelector("#f-rich");
+    hydratePhotos();
+    let savedRange = null;
+    const keepRange = () => { const sel = getSelection(); if(sel.rangeCount && ed.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange(); };
+    ["keyup","mouseup","input","blur"].forEach(ev => ed.addEventListener(ev, keepRange));
+    const restore = () => { ed.focus(); if(savedRange){ const sel = getSelection(); sel.removeAllRanges(); sel.addRange(savedRange); } };
+    const insertHTML = html => { restore(); document.execCommand("insertHTML", false, html); keepRange(); };
+    try{ document.execCommand("defaultParagraphSeparator", false, "p"); }catch(e){}
+    const tb = sheet.querySelector(".rtb");
+    tb.addEventListener("mousedown", e => { if(e.target.closest("button")) e.preventDefault(); });
+    tb.addEventListener("click", e => {
+      const b = e.target.closest("button[data-cmd]"); if(!b) return;
+      const cmd = b.dataset.cmd;
+      restore();
+      if(cmd === "link"){ const u = prompt("Adresse du lien (https://…)"); if(u && /^https?:\/\//.test(u.trim())) document.execCommand("createLink", false, u.trim()); else if(u) toast("Le lien doit commencer par https://"); }
+      else if(cmd === "imgurl"){ const u = prompt("Adresse de l'image (https://…)"); if(u && /^https:\/\//.test(u.trim())) insertHTML('<img src="'+esc(u.trim())+'" alt="" referrerpolicy="no-referrer">'); else if(u) toast("Le lien de l'image doit commencer par https://"); }
+      else if(cmd === "formatBlock") document.execCommand("formatBlock", false, "<"+b.dataset.val+">");
+      else if(cmd === "hiliteColor"){ if(!document.execCommand("hiliteColor", false, "#fff1a8")) document.execCommand("backColor", false, "#fff1a8"); }
+      else document.execCommand(cmd, false, null);
+      keepRange();
+    });
+    const rimg = sheet.querySelector("#f-rimg"), rhelp = sheet.querySelector("#f-rhelp");
+    rimg.addEventListener("change", async () => {
+      const f = rimg.files && rimg.files[0]; if(!f) return;
+      const save = sheet.querySelector("#f-save"); save.disabled = true; rhelp.textContent = "Envoi de l'image…";
+      try{ const id = await uploadPhoto(f); insertHTML('<img data-photo="'+esc(id)+'" src="'+state.photos.get(id)+'" alt="">'); rhelp.textContent = "Image ajoutée."; }
+      catch(err){ if(err.status === 401){ state.phase = "renew"; closeModal(); renderGate(); return; } rhelp.textContent = "L'image n'a pas pu être envoyée. Essaie un JPEG ou un PNG."; }
+      save.disabled = false; rimg.value = "";
+    });
+    ed.addEventListener("paste", e => {
+      const html = e.clipboardData && e.clipboardData.getData("text/html");
+      if(html){ e.preventDefault(); document.execCommand("insertHTML", false, sanitizeRich(html)); }
+    });
     const moodsBox = sheet.querySelector("#f-moods");
     const drawMoods = () => {
       const all = [...new Set([...state.moods, ...sel])];
@@ -2255,7 +2389,7 @@ function itemForm(it, preset){
     const urlHelp = document.createElement("span"); urlHelp.className = "help murl"; urlField.parentElement.appendChild(urlHelp);
     const fillFromLink = async () => {
       const u = urlField.value.trim();
-      if(!isMusicUrl(u) || u === musicFor) return;
+      if(sheet.classList.contains("mode-text") || !isMusicUrl(u) || u === musicFor) return;
       musicFor = u; urlHelp.textContent = "Je récupère le titre et l'artiste…";
       try{
         const m = await lookupMusic(u);
@@ -2282,7 +2416,7 @@ function itemForm(it, preset){
     titleIn.addEventListener("input", () => {
       clearTimeout(autoTimer);
       const term = titleIn.value.trim();
-      if(posterUrl || term.length < 3 || term === lastTerm) return;
+      if(sheet.classList.contains("mode-text") || posterUrl || term.length < 3 || term === lastTerm) return;
       autoTimer = setTimeout(() => { lastTerm = term; runSearch(true); }, 700);
     });
     pkind.addEventListener("change", () => { if(titleIn.value.trim().length >= 3) runSearch(true); });
@@ -2313,7 +2447,9 @@ function itemForm(it, preset){
         why: sheet.querySelector("#f-why").value.trim(),
         moods: [...sel], photoId: getPhoto() || null, posterUrl: posterUrl || null, updatedAt: Date.now()
       };
-      if(!data.title && !data.url && !data.note && !data.why && !data.photoId && !data.posterUrl){ toast("Ajoute au moins un titre, un lien, un mot ou une photo."); return; }
+      const richClean = sanitizeRich(ed.innerHTML);
+      data.rich = (richText(richClean) || /<img/.test(richClean)) ? richClean : null;
+      if(!data.title && !data.url && !data.note && !data.why && !data.photoId && !data.posterUrl && !data.rich){ toast("Ajoute au moins un titre, un lien, un mot ou une photo."); return; }
       if(editing) W.updItem(it.id, data).catch(() => {});
       else W.addItem({...data, id: uid(), createdAt: Date.now(), order: -Date.now(), author: state.me, favBy: [], replies: []}).catch(() => {});
       closeModal(); toast(editing ? "Modifié." : "Ajouté ♥");
@@ -2339,6 +2475,7 @@ function domainForm(c){
     + '<div class="field"><span class="lbl">Couleur</span><div class="swatches named" id="d-themes"></div></div>'
     + '<div class="field"><span class="lbl">Motif</span><div class="swatches named" id="d-pats"></div></div>'
     + '<div class="field"><span class="lbl">Icône</span><div class="iconpick" id="d-icons"></div></div>'
+    + '<div class="field"><label for="d-kind">Ce qu\'on y met</label><select id="d-kind"><option value="media"'+(!isTextCat(c) ? ' selected' : '')+'>Des recommandations (films, musique, vidéos… avec affiches)</option><option value="text"'+(isTextCat(c) ? ' selected' : '')+'>Des textes et des images (souvenirs, anecdotes…)</option></select></div>'
     + '<div class="field"><label for="d-lw">Nom des listes dans ce domaine</label><input type="text" id="d-lw" maxlength="24" value="'+esc(c.listLabel||"")+'" placeholder="'+esc(listWord(c))+'"><span class="help">Par exemple Playlists, Listes, Collections…</span></div>'
     + photoInputHTML("Image de couverture", "d-cover")
     + '<div class="sheet-actions">'+(editing ? (n ? '<span class="help" style="margin-right:auto">Vide ce domaine pour pouvoir le retirer.</span>' : '<button type="button" class="btn ghost" id="d-del">Retirer le domaine</button>') : '')
@@ -2367,7 +2504,7 @@ function domainForm(c){
     sheet.querySelector("#domForm").addEventListener("submit", e => {
       e.preventDefault();
       const name = sheet.querySelector("#d-name").value.trim(); if(!name){ toast("Donne un nom au domaine."); return; }
-      const data = {name, desc: sheet.querySelector("#d-desc").value.trim(), theme, custom: theme === "custom" ? custom : null, icon, pattern, coverId: getCover() || null, listLabel: sheet.querySelector("#d-lw").value.trim()};
+      const data = {name, desc: sheet.querySelector("#d-desc").value.trim(), theme, custom: theme === "custom" ? custom : null, icon, pattern, coverId: getCover() || null, listLabel: sheet.querySelector("#d-lw").value.trim(), kind: sheet.querySelector("#d-kind").value};
       if(editing) W.updCat(c.id, data).catch(() => {});
       else W.addCat({...data, id: uid(), order: Math.max(0, ...state.cats.map(ordKey)) + 1}).catch(() => {});
       closeModal();
@@ -2566,6 +2703,7 @@ document.addEventListener("click", e => {
   if(act === "edit-list"){ const l = listById(el.dataset.id); if(l) listForm(l); return; }
   if(act === "settings"){ settingsForm(); return; }
   if(act === "reglages"){ reglagesForm(); return; }
+  if(act === "rich-more"){ const card = el.closest(".card"); if(card){ const open = card.classList.toggle("rich-open"); el.textContent = open ? "Replier" : "Lire tout"; } return; }
   if(act === "intro-toggle"){ state.introOpen = !state.introOpen; if(state.introOpen) markIntroRead(); render(); return; }
   if(act === "intro-edit"){ state.editIntro = true; render(); const i = document.getElementById("i-sub"); if(i) i.focus(); return; }
   if(act === "intro-cancel"){ state.editIntro = false; render(); return; }
