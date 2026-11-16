@@ -740,6 +740,13 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 .backfab:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 @media (prefers-reduced-motion:no-preference){.backfab{animation:fabin .25s ease-out}}
 @keyframes fabin{from{transform:translateY(20px);opacity:0}}
+.card .artist{margin:-4px 0 0;font-size:.82rem;font-weight:700;color:var(--muted)}
+.mbtn{color:#fff !important;border:none}
+.mb-spotify{background:#1db954 !important}
+.mb-tidal{background:#111 !important}
+.mb-youtubeMusic{background:#ff0033 !important}
+.mb-youtube{background:#cc0000 !important}
+.murl{color:var(--deep);font-weight:600}
 
 </style>
 
@@ -1748,6 +1755,41 @@ function jsonp(url){
     document.head.appendChild(s);
   });
 }
+const MUSIC_HOST = /(^|\.)spotify\.com$|^spotify\.link$|(^|\.)tidal\.com$|(^|\.)deezer\.com$|^deezer\.page\.link$|^music\.apple\.com$|^music\.youtube\.com$|(^|\.)soundcloud\.com$|^song\.link$|^album\.link$/;
+function isMusicUrl(u){ try{ const h = new URL(String(u).trim()).hostname.replace(/^www\./, ""); return MUSIC_HOST.test(h) || (/(^|\.)youtube\.com$|^youtu\.be$/.test(h) && false); }catch(e){ return false; } }
+const PLATFORMS = [["spotify","Spotify"],["tidal","Tidal"],["youtubeMusic","YouTube Music"],["youtube","YouTube"]];
+async function lookupMusic(url){
+  try{ return await lookupOdesli(url); }
+  catch(e){
+    const u = new URL(url.trim()), h = u.hostname.replace(/^www\./, "");
+    const dz = u.pathname.match(/\/(track|album)\/(\d+)/);
+    if(/deezer\.com$/.test(h) && dz){
+      const r = await jsonp("https://api.deezer.com/" + dz[1] + "/" + dz[2] + "?output=jsonp");
+      return {title: r.title || "", artist: r.artist && r.artist.name || "", cover: (r.album && (r.album.cover_xl || r.album.cover_big)) || r.cover_xl || "", links: {}};
+    }
+    if(/spotify\.com$/.test(h)){
+      const r = await fetchJSON("https://open.spotify.com/oembed?url=" + encodeURIComponent(url.trim()));
+      return {title: r.title || "", artist: "", cover: r.thumbnail_url || "", links: {}};
+    }
+    throw e;
+  }
+}
+async function lookupOdesli(url){
+  const j = await fetchJSON("https://api.song.link/v1-alpha.1/links?userCountry=FR&url=" + encodeURIComponent(url.trim()));
+  const ent = j.entitiesByUniqueId && j.entitiesByUniqueId[j.entityUniqueId] || {};
+  const links = {};
+  PLATFORMS.forEach(([p]) => { const l = j.linksByPlatform && j.linksByPlatform[p]; if(l && l.url) links[p] = {url:l.url, app:l.nativeAppUriMobile || ""}; });
+  return {title: ent.title || "", artist: ent.artistName || "", cover: ent.thumbnailUrl || "", links};
+}
+const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+function musicButtons(it){
+  const L = it.links || {};
+  const btns = PLATFORMS.filter(([p]) => L[p] && L[p].url).map(([p, label]) => {
+    const href = (p === "spotify" && IS_MOBILE && /^spotify:/.test(L[p].app || "")) ? L[p].app : L[p].url;
+    return '<a class="btn small mbtn mb-'+p+'" href="'+esc(href)+'"'+(/^https:/.test(href) ? ' target="_blank" rel="noopener noreferrer"' : '')+' draggable="false">'+esc(label)+'</a>';
+  });
+  return btns.length ? '<div class="links">'+btns.join("")+'</div>' : "";
+}
 const yr = d => (d || "").slice(0, 4);
 async function fetchJSON(url, opts){ const r = await fetch(url, opts); if(!r.ok) throw new Error(r.status); return r.json(); }
 function tmdbKey(){ return (state.settings && state.settings.tmdbKey || "").trim(); }
@@ -1980,7 +2022,8 @@ function cardHTML(it, idx, ctx){
   const c = catById(it.cat), th = themeOf(c);
   const l = it.list ? listById(it.list) : null;
   const rot = ((idx % 3) - 1) * 0.8;
-  const li = it.url ? linkInfo(it.url) : null;
+  const hasPlatforms = it.links && Object.keys(it.links).length;
+  const li = it.url && !hasPlatforms ? linkInfo(it.url) : null;
   const isMot = !it.title && !li && !it.photoId && !it.posterUrl;
   const mine = (it.favBy||[]).includes(state.me);
   const favNames = (it.favBy||[]).filter(Boolean);
@@ -1994,6 +2037,8 @@ function cardHTML(it, idx, ctx){
   if(poster) h += '<img class="poster'+(it.posterUrl ? '' : ' wide')+'" src="'+esc(poster)+'" alt="'+esc(it.title || "Affiche")+'" loading="lazy" draggable="false" referrerpolicy="no-referrer">';
   if(it.photoId) h += photoTag(it.photoId, "photo", it.title || "Photo");
   if(it.title) h += '<h3>'+esc(it.title)+'</h3>';
+  if(it.artist) h += '<p class="artist">'+esc(it.artist)+'</p>';
+  if(hasPlatforms) h += musicButtons(it);
   const both = it.why && it.note;
   if(it.why) h += '<div class="notebox why">'+(both || !it.title ? '<span class="nlabel">Pourquoi</span>' : '')+'<p class="note">'+esc(it.why)+'</p></div>';
   if(it.note) h += '<div class="notebox">'+(both ? '<span class="nlabel">Ça m\'a fait penser à toi</span>' : '')+'<p class="note">'+esc(it.note)+'</p></div>';
@@ -2058,6 +2103,7 @@ function itemForm(it, preset){
       + sortedCats().map(c => '<option value="'+esc(c.id)+'"'+(c.id===it.cat?' selected':'')+'>'+esc(c.name)+'</option>').join("") + '</select></div>'
     + '<div class="field" style="flex:1 1 180px"><label for="f-list" id="f-list-lbl">Rangé dans</label><select id="f-list"></select></div></div>'
     + '<div class="field"><label for="f-title">Titre</label><input type="text" id="f-title" maxlength="200" value="'+esc(it.title||"")+'" placeholder="Le nom du film, du morceau… (facultatif)"></div>'
+    + '<div class="field"><label for="f-artist">Artiste, réalisateur, auteur…</label><input type="text" id="f-artist" maxlength="120" value="'+esc(it.artist||"")+'" placeholder="(facultatif)"></div>'
     + '<div class="field"><span class="lbl">Affiche ou pochette</span>'
     +   '<div class="row"><select id="f-pkind" aria-label="Type">'+Object.entries(POSTER_KINDS).map(([k,v]) => '<option value="'+k+'">'+v.label+'</option>').join("")+'</select>'
     +   '<button type="button" class="btn small" id="f-psearch">Chercher avec le titre</button></div>'
@@ -2103,6 +2149,27 @@ function itemForm(it, preset){
     sheet.querySelector("#f-newmood").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); addMood(); }});
     const getPhoto = photoField(sheet, it.photoId, "#f-save");
     let posterUrl = it.posterUrl || null;
+    let musicLinks = null, musicFor = "";
+    const urlField = sheet.querySelector("#f-url");
+    const urlHelp = document.createElement("span"); urlHelp.className = "help murl"; urlField.parentElement.appendChild(urlHelp);
+    const fillFromLink = async () => {
+      const u = urlField.value.trim();
+      if(!isMusicUrl(u) || u === musicFor) return;
+      musicFor = u; urlHelp.textContent = "Je récupère le titre et l'artiste…";
+      try{
+        const m = await lookupMusic(u);
+        if(urlField.value.trim() !== u) return;
+        musicLinks = Object.keys(m.links).length ? m.links : null;
+        const t = sheet.querySelector("#f-title"), a = sheet.querySelector("#f-artist");
+        if(m.title) t.value = m.title;
+        if(m.artist) a.value = m.artist;
+        if(!posterUrl && m.cover){ posterUrl = m.cover; drawPoster(); }
+        urlHelp.textContent = m.title ? "Trouvé : " + m.title + (m.artist ? " — " + m.artist : "") + (musicLinks ? " · " + PLATFORMS.filter(([p]) => musicLinks[p]).map(x => x[1]).join(", ") : "") : "Lien reconnu, mais sans informations.";
+      }catch(e){ urlHelp.textContent = "Je n'ai pas pu lire ce lien. Remplis le titre à la main."; musicFor = ""; }
+    };
+    let linkTimer = null;
+    urlField.addEventListener("input", () => { clearTimeout(linkTimer); linkTimer = setTimeout(fillFromLink, 500); });
+    urlField.addEventListener("change", fillFromLink);
     const pkind = sheet.querySelector("#f-pkind"), pres = sheet.querySelector("#f-pres"), pcur = sheet.querySelector("#f-pcur");
     pkind.value = guessKind(catById(catSel.value));
     catSel.addEventListener("change", () => { pkind.value = guessKind(catById(catSel.value)); });
@@ -2127,7 +2194,7 @@ function itemForm(it, preset){
         const notes = searchNotes.length ? '<p class="help pnote">'+searchNotes.map(esc).join("<br>")+'</p>' : '';
         pres.innerHTML = notes + (res.length ? res.map((r, i) => '<button type="button" class="pres-item" data-i="'+i+'"><img src="'+esc(r.url)+'" alt="" loading="lazy" referrerpolicy="no-referrer"><span>'+esc(r.title)+'</span><small>'+esc(r.sub)+'</small></button>').join("")
           : '<p class="help">Rien trouvé. Essaie un autre type ou une autre orthographe.</p>');
-        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; const urlIn = sheet.querySelector("#f-url"); if(r.link && urlIn && !urlIn.value.trim() && (pkind.value === "music" || pkind.value === "song" || pkind.value === "album")) urlIn.value = r.link; if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; pres.innerHTML = ""; drawPoster(); };
+        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; const urlIn = sheet.querySelector("#f-url"); if(r.link && urlIn && !urlIn.value.trim() && (pkind.value === "music" || pkind.value === "song" || pkind.value === "album")){ urlIn.value = r.link; fillFromLink(); } if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; pres.innerHTML = ""; drawPoster(); };
       }catch(err){ pres.innerHTML = '<p class="help">La recherche ne répond pas. '+(searchNotes.length ? searchNotes.map(esc).join(" ") : 'Vérifie ta connexion et réessaie.')+'</p>'; }
     };
     sheet.querySelector("#f-psearch").addEventListener("click", () => runSearch(false));
@@ -2138,6 +2205,8 @@ function itemForm(it, preset){
       const data = {
         cat: catSel.value, list: listSel.value || null,
         title: sheet.querySelector("#f-title").value.trim(),
+        artist: sheet.querySelector("#f-artist").value.trim(),
+        links: (musicLinks && musicFor === sheet.querySelector("#f-url").value.trim()) ? musicLinks : (sheet.querySelector("#f-url").value.trim() === (it.url || "") ? (it.links || null) : null),
         url: sheet.querySelector("#f-url").value.trim(),
         note: sheet.querySelector("#f-note").value.trim(),
         why: sheet.querySelector("#f-why").value.trim(),
