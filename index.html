@@ -1758,32 +1758,78 @@ function jsonp(url){
 const MUSIC_HOST = /(^|\.)spotify\.com$|^spotify\.link$|(^|\.)tidal\.com$|(^|\.)deezer\.com$|^deezer\.page\.link$|^music\.apple\.com$|^music\.youtube\.com$|(^|\.)soundcloud\.com$|^song\.link$|^album\.link$/;
 function isMusicUrl(u){ try{ const h = new URL(String(u).trim()).hostname.replace(/^www\./, ""); return MUSIC_HOST.test(h) || (/(^|\.)youtube\.com$|^youtu\.be$/.test(h) && false); }catch(e){ return false; } }
 const PLATFORMS = [["spotify","Spotify"],["tidal","Tidal"],["youtubeMusic","YouTube Music"],["youtube","YouTube"]];
-async function lookupMusic(url){
-  try{ return await lookupOdesli(url); }
-  catch(e){
-    const u = new URL(url.trim()), h = u.hostname.replace(/^www\./, "");
-    const dz = u.pathname.match(/\/(track|album)\/(\d+)/);
-    if(/deezer\.com$/.test(h) && dz){
-      const r = await jsonp("https://api.deezer.com/" + dz[1] + "/" + dz[2] + "?output=jsonp");
-      return {title: r.title || "", artist: r.artist && r.artist.name || "", cover: (r.album && (r.album.cover_xl || r.album.cover_big)) || r.cover_xl || "", links: {}};
-    }
-    if(/spotify\.com$/.test(h)){
-      const r = await fetchJSON("https://open.spotify.com/oembed?url=" + encodeURIComponent(url.trim()));
-      return {title: r.title || "", artist: "", cover: r.thumbnail_url || "", links: {}};
-    }
-    throw e;
-  }
-}
-async function lookupOdesli(url){
-  const j = await fetchJSON("https://api.song.link/v1-alpha.1/links?userCountry=FR&url=" + encodeURIComponent(url.trim()));
-  const ent = j.entitiesByUniqueId && j.entitiesByUniqueId[j.entityUniqueId] || {};
-  const links = {};
-  PLATFORMS.forEach(([p]) => { const l = j.linksByPlatform && j.linksByPlatform[p]; if(l && l.url) links[p] = {url:l.url, app:l.nativeAppUriMobile || ""}; });
-  return {title: ent.title || "", artist: ent.artistName || "", cover: ent.thumbnailUrl || "", links};
-}
 const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+function platformOf(url){
+  try{
+    const h = new URL(String(url).trim()).hostname.replace(/^www\./, "");
+    if(/spotify\.com$|^spotify\.link$/.test(h)) return "spotify";
+    if(/(^|\.)tidal\.com$/.test(h)) return "tidal";
+    if(/^music\.youtube\.com$/.test(h)) return "youtubeMusic";
+    if(/(^|\.)youtube\.com$|^youtu\.be$/.test(h)) return "youtube";
+  }catch(e){}
+  return "";
+}
+function spotifyAppUri(url){
+  const m = String(url).match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|album|playlist|artist|episode|show)\/([A-Za-z0-9]+)/);
+  return m ? "spotify:" + m[1] + ":" + m[2] : "";
+}
+/* Liens vers les 4 applis, sans API externe : le lien d'origine tel quel,
+   et pour les autres une recherche « titre artiste » qui ouvre directement l'appli. */
+function buildMusicLinks(url, title, artist){
+  const q = [title, artist].filter(Boolean).join(" ").trim();
+  const origin = platformOf(url);
+  const links = {};
+  if(origin) links[origin] = {url: String(url).trim(), app: origin === "spotify" ? spotifyAppUri(url) : ""};
+  if(!q) return links;
+  const e = encodeURIComponent(q);
+  if(!links.spotify) links.spotify = {url: "https://open.spotify.com/search/" + e, app: "spotify:search:" + q};
+  if(!links.tidal) links.tidal = {url: "https://listen.tidal.com/search?q=" + e, app: ""};
+  if(!links.youtubeMusic) links.youtubeMusic = {url: "https://music.youtube.com/search?q=" + e, app: ""};
+  if(!links.youtube) links.youtube = {url: "https://www.youtube.com/results?search_query=" + e, app: ""};
+  return links;
+}
+function splitDash(t){ const m = String(t || "").match(/^(.+?)\s+[-–—]\s+(.+)$/); return m ? {title: m[1].trim(), artist: m[2].trim()} : null; }
+async function deezerFind(term){
+  const j = await jsonp("https://api.deezer.com/search/track?q=" + encodeURIComponent(term) + "&limit=5&output=jsonp");
+  const r = j && j.data && j.data[0];
+  return r ? {title: r.title, artist: r.artist && r.artist.name || "", cover: r.album && (r.album.cover_xl || r.album.cover_big) || ""} : null;
+}
+async function lookupMusic(url){
+  url = url.trim();
+  const u = new URL(url), h = u.hostname.replace(/^www\./, "");
+  let out = null;
+  const dz = u.pathname.match(/\/(track|album)\/(\d+)/);
+  if(/deezer\.com$/.test(h) && dz){
+    const r = await jsonp("https://api.deezer.com/" + dz[1] + "/" + dz[2] + "?output=jsonp");
+    out = {title: r.title || "", artist: r.artist && r.artist.name || "", cover: (r.album && (r.album.cover_xl || r.album.cover_big)) || r.cover_xl || ""};
+  } else if(/^music\.apple\.com$/.test(h)){
+    const id = u.searchParams.get("i") || (u.pathname.match(/\/(\d+)(?:$|\?)/) || [])[1];
+    const r = id && await jsonp("https://itunes.apple.com/lookup?id=" + id + "&country=FR");
+    const x = r && r.results && r.results[0];
+    if(x) out = {title: x.trackName || x.collectionName || "", artist: x.artistName || "", cover: (x.artworkUrl100 || "").replace("100x100", "600x600")};
+  } else if(/spotify\.com$/.test(h)){
+    const r = await fetchJSON("https://open.spotify.com/oembed?url=" + encodeURIComponent(url));
+    out = {title: r.title || "", artist: "", cover: r.thumbnail_url || ""};
+  } else if(/(^|\.)tidal\.com$/.test(h)){
+    const tries = ["https://oembed.tidal.com/?url=" + encodeURIComponent(url), "https://noembed.com/embed?url=" + encodeURIComponent(url)];
+    for(const t of tries){
+      try{ const r = await fetchJSON(t); if(r && r.title && !r.error){ const d = !r.author_name && splitDash(r.title); out = {title: d ? d.title : r.title, artist: d ? d.artist : (r.author_name || ""), cover: r.thumbnail_url || ""}; break; } }catch(e){}
+    }
+  } else if(/youtube\.com$|^youtu\.be$/.test(h)){
+    const r = await fetchJSON("https://noembed.com/embed?url=" + encodeURIComponent(url.replace("music.youtube.com", "www.youtube.com")));
+    if(r && r.title && !r.error){ const d = splitDash(r.title); out = {title: d ? d.title : r.title, artist: d ? d.artist : (r.author_name || "").replace(/ - Topic$/, ""), cover: ""}; }
+  }
+  if(!out || !out.title) throw new Error("illisible");
+  if(!out.artist){
+    try{ const f = await deezerFind(out.title); if(f && f.title.toLowerCase() === out.title.toLowerCase()){ out.artist = f.artist; if(!out.cover) out.cover = f.cover; } }catch(e){}
+  }
+  out.links = buildMusicLinks(url, out.title, out.artist);
+  return out;
+}
 function musicButtons(it){
-  const L = it.links || {};
+  const L = Object.assign(buildMusicLinks(it.url && platformOf(it.url) ? it.url : "", it.title, it.artist), it.links || {});
+  const isMusic = it.artist || (it.links && Object.keys(it.links).length) || platformOf(it.url || "") === "spotify" || platformOf(it.url || "") === "tidal" || /music\.youtube/.test(it.url || "");
+  if(!isMusic) return "";
   const btns = PLATFORMS.filter(([p]) => L[p] && L[p].url).map(([p, label]) => {
     const href = (p === "spotify" && IS_MOBILE && /^spotify:/.test(L[p].app || "")) ? L[p].app : L[p].url;
     return '<a class="btn small mbtn mb-'+p+'" href="'+esc(href)+'"'+(/^https:/.test(href) ? ' target="_blank" rel="noopener noreferrer"' : '')+' draggable="false">'+esc(label)+'</a>';
@@ -1808,8 +1854,8 @@ async function fromTVmaze(term){
 }
 async function fromDeezer(term, what){
   const j = await jsonp("https://api.deezer.com/search/" + what + "?q=" + encodeURIComponent(term) + "&limit=12&output=jsonp");
-  return (j && j.data || []).map(r => what === "track" ? {url:r.album && (r.album.cover_xl || r.album.cover_big), title:r.title, link:r.link, sub:[r.artist && r.artist.name, r.album && r.album.title, "titre"].filter(Boolean).join(" · ")}
-    : {url:r.cover_xl || r.cover_big, title:r.title, link:r.link, single: r.record_type === "single", sub:[r.artist && r.artist.name, r.record_type === "single" ? "pochette du single" : "album"].filter(Boolean).join(" · ")}).filter(r => r.url);
+  return (j && j.data || []).map(r => what === "track" ? {url:r.album && (r.album.cover_xl || r.album.cover_big), title:r.title, artist:r.artist && r.artist.name, link:r.link, sub:[r.artist && r.artist.name, r.album && r.album.title, "titre"].filter(Boolean).join(" · ")}
+    : {url:r.cover_xl || r.cover_big, title:r.title, artist:r.artist && r.artist.name, link:r.link, single: r.record_type === "single", sub:[r.artist && r.artist.name, r.record_type === "single" ? "pochette du single" : "album"].filter(Boolean).join(" · ")}).filter(r => r.url);
 }
 async function fromOpenLibrary(term){
   const j = await fetchJSON("https://openlibrary.org/search.json?q=" + encodeURIComponent(term) + "&limit=12&fields=title,author_name,first_publish_year,cover_i");
@@ -1820,7 +1866,7 @@ async function fromITunes(term, kind){
   const data = await jsonp("https://itunes.apple.com/search?term=" + encodeURIComponent(term) + "&" + k.q + "&country=FR&limit=12");
   return (data && data.results || []).filter(r => r.artworkUrl100).map(r => ({
     url: r.artworkUrl100.replace(/\/\d+x\d+(bb|cc)?\.(jpg|png|webp)$/i, "/600x600bb.jpg"),
-    title: r.trackName || r.collectionName || "", link: r.trackViewUrl || r.collectionViewUrl, sub: [r.artistName, yr(r.releaseDate), "Apple"].filter(Boolean).join(" · ")
+    title: r.trackName || r.collectionName || "", artist: r.artistName, link: r.trackViewUrl || r.collectionViewUrl, sub: [r.artistName, yr(r.releaseDate), "Apple"].filter(Boolean).join(" · ")
   }));
 }
 let searchNotes = [];
@@ -2022,7 +2068,7 @@ function cardHTML(it, idx, ctx){
   const c = catById(it.cat), th = themeOf(c);
   const l = it.list ? listById(it.list) : null;
   const rot = ((idx % 3) - 1) * 0.8;
-  const hasPlatforms = it.links && Object.keys(it.links).length;
+  const mbtns = musicButtons(it), hasPlatforms = !!mbtns;
   const li = it.url && !hasPlatforms ? linkInfo(it.url) : null;
   const isMot = !it.title && !li && !it.photoId && !it.posterUrl;
   const mine = (it.favBy||[]).includes(state.me);
@@ -2038,7 +2084,7 @@ function cardHTML(it, idx, ctx){
   if(it.photoId) h += photoTag(it.photoId, "photo", it.title || "Photo");
   if(it.title) h += '<h3>'+esc(it.title)+'</h3>';
   if(it.artist) h += '<p class="artist">'+esc(it.artist)+'</p>';
-  if(hasPlatforms) h += musicButtons(it);
+  if(hasPlatforms) h += mbtns;
   const both = it.why && it.note;
   if(it.why) h += '<div class="notebox why">'+(both || !it.title ? '<span class="nlabel">Pourquoi</span>' : '')+'<p class="note">'+esc(it.why)+'</p></div>';
   if(it.note) h += '<div class="notebox">'+(both ? '<span class="nlabel">Ça m\'a fait penser à toi</span>' : '')+'<p class="note">'+esc(it.note)+'</p></div>';
@@ -2165,7 +2211,7 @@ function itemForm(it, preset){
         if(m.artist) a.value = m.artist;
         if(!posterUrl && m.cover){ posterUrl = m.cover; drawPoster(); }
         urlHelp.textContent = m.title ? "Trouvé : " + m.title + (m.artist ? " — " + m.artist : "") + (musicLinks ? " · " + PLATFORMS.filter(([p]) => musicLinks[p]).map(x => x[1]).join(", ") : "") : "Lien reconnu, mais sans informations.";
-      }catch(e){ urlHelp.textContent = "Je n'ai pas pu lire ce lien. Remplis le titre à la main."; musicFor = ""; }
+      }catch(e){ urlHelp.textContent = (platformOf(u) === "tidal" ? "Tidal ne laisse pas lire ses liens depuis un autre site. " : "Je n'ai pas pu lire ce lien. ") + "Tape le titre : je te propose la pochette, et l'artiste se remplit quand tu la choisis."; musicFor = ""; }
     };
     let linkTimer = null;
     urlField.addEventListener("input", () => { clearTimeout(linkTimer); linkTimer = setTimeout(fillFromLink, 500); });
@@ -2194,7 +2240,7 @@ function itemForm(it, preset){
         const notes = searchNotes.length ? '<p class="help pnote">'+searchNotes.map(esc).join("<br>")+'</p>' : '';
         pres.innerHTML = notes + (res.length ? res.map((r, i) => '<button type="button" class="pres-item" data-i="'+i+'"><img src="'+esc(r.url)+'" alt="" loading="lazy" referrerpolicy="no-referrer"><span>'+esc(r.title)+'</span><small>'+esc(r.sub)+'</small></button>').join("")
           : '<p class="help">Rien trouvé. Essaie un autre type ou une autre orthographe.</p>');
-        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; const urlIn = sheet.querySelector("#f-url"); if(r.link && urlIn && !urlIn.value.trim() && (pkind.value === "music" || pkind.value === "song" || pkind.value === "album")){ urlIn.value = r.link; fillFromLink(); } if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; pres.innerHTML = ""; drawPoster(); };
+        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; const urlIn = sheet.querySelector("#f-url"); if(r.link && urlIn && !urlIn.value.trim() && (pkind.value === "music" || pkind.value === "song" || pkind.value === "album")){ urlIn.value = r.link; fillFromLink(); } if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; const ar = sheet.querySelector("#f-artist"); if(r.artist && ar && !ar.value.trim()) ar.value = r.artist; pres.innerHTML = ""; drawPoster(); };
       }catch(err){ pres.innerHTML = '<p class="help">La recherche ne répond pas. '+(searchNotes.length ? searchNotes.map(esc).join(" ") : 'Vérifie ta connexion et réessaie.')+'</p>'; }
     };
     sheet.querySelector("#f-psearch").addEventListener("click", () => runSearch(false));
