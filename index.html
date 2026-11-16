@@ -442,6 +442,144 @@ html:not([data-skin="carnet"]) .home-hero p.sub{font-family:var(--body);letter-s
 html[data-skin="papeterie"] .home-grid .tiles,html[data-skin="festival"] .home-grid .tiles{row-gap:96px;padding-bottom:84px}
 html[data-skin="festival"] .marquee{margin-bottom:46px}
 
+/* ===== Style « Coloc » : titre géant, polaroïds, calendrier ===== */
+html[data-skin="coloc"] body{background-color:var(--bg) !important;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px) !important;background-size:26px 26px !important}
+html[data-skin="coloc"] .btn{border-radius:999px;font-family:var(--body);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;padding:10px 20px}
+html[data-skin="coloc"] .btn.small{padding:7px 16px;font-size:.72rem}
+html[data-skin="coloc"] .btn.ghost{text-transform:none;letter-spacing:0;font-size:.9rem}
+html[data-skin="coloc"] .hero h1,html[data-skin="coloc"] h2.section,html[data-skin="coloc"] .sheet h2,html[data-skin="coloc"] .empty h3{text-transform:uppercase;letter-spacing:.01em;font-weight:400;color:var(--deep)}
+html[data-skin="coloc"] .card{background:var(--card)}
+html[data-skin="coloc"] .topbar{margin-bottom:2px}
+
+/* barre de navigation */
+.cnav{display:none}
+html[data-skin="coloc"] .cnav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:6px 0 10px;flex-wrap:wrap}
+.clogo{font-family:var(--display);color:var(--deep);font-size:1.45rem;line-height:.95;text-transform:uppercase}
+.clinks{display:flex;gap:24px;flex-wrap:wrap;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.clinks a{color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.clinks a:hover{color:var(--deep);text-decoration:underline;text-underline-offset:4px}
+.clinks b{background:var(--accent);color:#fff;border-radius:999px;padding:0 8px;font-size:.7rem;letter-spacing:0}
+
+/* en-tête */
+.chero{position:relative;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px;align-items:start;padding:8px 0 26px}
+.ctext{position:relative;z-index:2;display:grid;gap:10px;align-content:start}
+.ctitle{margin:6px 0 0;font-family:var(--display);color:var(--deep);font-weight:400;text-transform:uppercase;font-size:clamp(4rem,10.5vw,8.4rem);line-height:.88;letter-spacing:.005em;display:grid}
+.cscript{font-family:"Yellowtail",var(--hand);color:var(--accent);font-size:clamp(3.4rem,8.5vw,6.6rem);line-height:1;position:absolute;left:min(56%,330px);top:clamp(9rem,21vw,17rem);transform:rotate(-7deg);white-space:nowrap;pointer-events:none}
+.chero .intro{margin-top:14px}
+.chero .intro .sub{font-family:var(--body);font-size:.98rem;line-height:1.6;max-width:36ch;color:var(--ink)}
+.chero .doodles{z-index:1}
+.chero .doodle-etoiles{top:4px !important;right:46% !important}
+.chero .doodle-dragon{top:auto !important;bottom:6px !important;right:48% !important}
+
+/* polaroïds */
+.cstack{position:relative;min-height:480px;margin-top:40px}
+.pol{position:absolute;margin:0;background:#fff;padding:12px 12px 46px;box-shadow:0 14px 34px rgba(30,40,25,.16);cursor:pointer;transition:transform .25s}
+.pol:hover{transform:rotate(0deg) scale(1.02) !important;z-index:4}
+.pol img{display:block;width:100%;height:100%;object-fit:cover;background:var(--line)}
+.pol figcaption{position:absolute;left:14px;right:14px;bottom:10px;font-family:var(--hand);font-size:1.45rem;line-height:1.1;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptape{position:absolute;top:-14px;left:50%;width:96px;height:26px;transform:translateX(-50%) rotate(-4deg);background:color-mix(in srgb,var(--accent) 60%,transparent);z-index:2}
+.pol.big{right:4%;top:34px;width:min(330px,62%);aspect-ratio:290/380;transform:rotate(4deg)}
+.pol.small{left:2%;top:190px;width:min(180px,36%);aspect-ratio:150/240;transform:rotate(-7deg);z-index:3}
+.pol.empty{border:none;font:inherit;text-align:center;color:var(--muted)}
+.ph-empty{display:grid;place-items:center;align-content:center;gap:10px;height:100%;border:2px dashed var(--line);font-size:.85rem;padding:14px}
+.ph-empty .ico{width:42px;height:42px;color:var(--deep)}
+.cstack .perch{top:-30px;left:auto;right:calc(4% + 80px);transform:none;width:126px;z-index:5}
+.sticker{position:absolute;display:grid;place-items:center;text-align:center;font-family:var(--hand);line-height:1;color:#fff;background:var(--accent);
+  clip-path:polygon(50% 0%,61% 8%,75% 6%,82% 18%,94% 25%,92% 39%,100% 50%,92% 61%,94% 75%,82% 82%,75% 94%,61% 92%,50% 100%,39% 92%,25% 94%,18% 82%,6% 75%,8% 61%,0% 50%,8% 39%,6% 25%,18% 18%,25% 6%,39% 8%)}
+.sticker.s1{right:-6px;top:6px;width:124px;height:124px;font-size:1.55rem;transform:rotate(12deg);z-index:6}
+.stk-link{text-decoration:none}
+.cstack .capy{left:auto;right:58%;bottom:-6px;top:auto;z-index:1}
+
+/* compteurs */
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:6px 0 26px}
+.num{border-radius:22px;padding:16px 20px;background:var(--t1);color:var(--ink);text-decoration:none;display:grid;gap:2px}
+.num:nth-child(2){background:var(--t2)}.num:nth-child(3){background:var(--t3)}.num:nth-child(4){background:var(--t4)}
+.num b{font-family:var(--display);font-weight:400;font-size:3rem;line-height:1;color:var(--deep)}
+.num span{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+a.num:hover{outline:2px solid var(--deep)}
+
+/* ticket « cette semaine » */
+.ticket{background:var(--deep);border-radius:28px;padding:34px 40px 40px;margin-bottom:34px}
+.tin{background:var(--card);padding:34px 30px 26px;border-radius:0 0 16px 16px;-webkit-mask:radial-gradient(16px 16px at 50% 0,transparent 98%,#000) 0 0/40px 100% repeat-x;mask:radial-gradient(16px 16px at 50% 0,transparent 98%,#000) 0 0/40px 100% repeat-x}
+.tin h3{text-align:center;margin:0;font-size:.72rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.tin h2{text-align:center;font-family:var(--display);font-weight:400;color:var(--deep);font-size:2.5rem;text-transform:uppercase;margin:2px 0 20px}
+.week{display:grid;grid-template-columns:repeat(7,minmax(92px,1fr));border:2px solid var(--ink);border-radius:14px;overflow:hidden;overflow-x:auto}
+.day{font:inherit;color:var(--ink);text-align:left;cursor:pointer;border:none;border-left:2px solid var(--ink);background:var(--card);padding:10px 10px 14px;min-height:132px;display:grid;align-content:start;gap:8px;position:relative}
+.day:first-child{border-left:none}
+.day:hover{background:var(--t1)}
+.day .d{display:flex;justify-content:space-between;font-size:.7rem;font-weight:800;letter-spacing:.06em}
+.day .ics{display:flex;flex-wrap:wrap;gap:6px}
+.day .ics i{width:32px;height:32px;border-radius:10px;padding:7px;color:#fff;display:block}
+.day .ics b{font-size:.75rem;align-self:center}
+.day u{font-size:.8rem;font-weight:600}
+.day.off{background:var(--t1)}
+.day.future{background:var(--card);cursor:default}
+.day.today::after{content:"";position:absolute;inset:6px -4px;border:2.5px solid var(--accent);border-radius:50%;transform:rotate(-6deg);pointer-events:none}
+
+/* domaines */
+.chead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:8px 0 16px}
+.chead h2{font-family:var(--display);font-weight:400;color:var(--deep);font-size:2.2rem;text-transform:uppercase;margin:0}
+.ccards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.ccard{position:relative;overflow:hidden;background:var(--card);border-radius:24px;padding:18px;min-height:230px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:2px;box-shadow:0 6px 22px rgba(30,40,25,.07);transition:transform .2s,box-shadow .2s}
+.ccard:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(30,40,25,.12)}
+.ccard small{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.6;position:relative}
+.ccard strong{font-family:var(--display);font-weight:400;color:var(--dd);font-size:1.9rem;line-height:1.05;text-transform:uppercase;position:relative;overflow-wrap:anywhere}
+.ccard em{font-style:normal;font-size:.8rem;font-weight:600;position:relative}
+.ccard .big{position:absolute;right:-22px;bottom:-22px;width:160px;height:160px;color:var(--dc);opacity:.95}
+.ccard .ccover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22}
+.ccard .go{position:absolute;right:16px;bottom:16px;width:44px;height:44px;border-radius:50%;background:var(--dd);padding:12px;color:#fff}
+.sticker.s2{left:14px;bottom:14px;width:80px;height:80px;font-size:1.1rem;transform:rotate(-10deg)}
+
+/* liste à regarder */
+.watchbox{display:grid;grid-template-columns:1fr 1.2fr;border-radius:28px;overflow:hidden;margin:40px 0 30px}
+.wl{background:var(--t3);padding:38px;display:grid;gap:10px;align-content:center;justify-items:start}
+.wl small{font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.wl h2{font-family:var(--display);font-weight:400;color:var(--deep);font-size:2.8rem;line-height:1;margin:0;text-transform:uppercase}
+.wl p{margin:0;max-width:34ch;line-height:1.55}
+.wr{position:relative;min-height:320px;background:repeating-linear-gradient(90deg,var(--t2) 0 18px,var(--card) 18px 36px)}
+.wr .pol{width:170px;aspect-ratio:170/250;top:40px}
+.wr .pol.w0{left:16%;transform:rotate(-4deg)}
+.wr .pol.w1{left:50%;transform:rotate(5deg)}
+.wr-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--deep);opacity:.4}
+.wr-empty .ico{width:90px;height:90px}
+
+/* fenêtre « fiche » */
+.modal-wall .wall{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.iconpick{display:flex;flex-wrap:wrap;gap:6px}
+.iconpick button{width:42px;height:42px;padding:9px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.iconpick button[aria-pressed="true"]{border-color:var(--ink);background:var(--t1)}
+
+@media (max-width:860px){
+  .chero{grid-template-columns:1fr}
+  .cstack{min-height:420px;margin-top:10px}
+  .cscript{left:auto;right:4%;top:clamp(7rem,30vw,12rem)}
+  .nums{grid-template-columns:repeat(2,1fr)}
+  .watchbox{grid-template-columns:1fr}
+  .ticket{padding:22px 14px 24px}
+  .tin{padding:30px 12px 18px}
+}
+@media (max-width:520px){
+  .clinks{gap:14px;font-size:.68rem}
+  .pol.big{width:66%}
+  .pol.small{width:40%;top:170px}
+  .ccards{grid-template-columns:repeat(2,1fr)}
+  .ccard{min-height:180px}
+  .ccard strong{font-size:1.35rem}
+  .ccard .big{width:110px;height:110px}
+  .wr .pol{width:130px}
+}
+@media (prefers-reduced-motion:reduce){.pol,.ccard{transition:none}}
+.pol.big figcaption{text-align:right}
+.pol.small{top:250px;left:-1%}
+.tin h2{line-height:1}
+@media (max-width:520px){
+  .cstack{min-height:520px}
+  .pol.small{top:210px}
+  .tin h2{font-size:1.8rem}
+  .chead h2{font-size:1.7rem}
+  .chead{flex-wrap:wrap}
+}
+
 </style>
 
 </head>
@@ -558,6 +696,39 @@ const DRAGON_SVG = '<svg viewBox="0 0 70 56" aria-hidden="true">'
   + '<circle cx="55" cy="25" r="1.8" fill="'+INK+'"/><path d="M59 30 q2 1 3 -1" fill="none" stroke="'+INK+'" stroke-width="1.5" stroke-linecap="round"/>'
   + '<ellipse cx="49" cy="30" rx="2.6" ry="1.6" fill="#f2a0a0" opacity=".7"/></svg>';
 
+/* Icônes de domaines */
+const SVGI = p => '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+const ICONS = {
+  film: SVGI('<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 9l16-5 1.2 3.6L4.2 12.6"/><path d="M8 5.6l2.4 3.4M13 4.1l2.4 3.4"/>'),
+  tv: SVGI('<rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 3l4 4 4-4"/><circle cx="17.5" cy="11" r=".6" fill="currentColor"/>'),
+  music: SVGI('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/><path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5"/>'),
+  play: SVGI('<rect x="2.5" y="5" width="19" height="14" rx="5"/><path d="M10 9.2l5 2.8-5 2.8z" fill="currentColor"/>'),
+  phone: SVGI('<rect x="6.5" y="2.5" width="11" height="19" rx="3"/><path d="M12.5 8v5.2a1.8 1.8 0 1 1-1.8-1.8M12.5 8c.6 1.2 1.6 1.8 2.8 1.8"/>'),
+  bubble: SVGI('<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
+  hearts: SVGI('<path d="M9 19s-6-3.6-6-8.2C3 8.4 4.7 7 6.5 7 7.8 7 8.6 7.8 9 8.6 9.4 7.8 10.2 7 11.5 7 13.3 7 15 8.4 15 10.8 15 15.4 9 19 9 19z"/><path d="M16 5.2c.5-.8 1.2-1.2 2.1-1.2 1.4 0 2.4 1 2.4 2.6 0 2.8-3.8 5-3.8 5"/>'),
+  camera: SVGI('<rect x="3" y="7" width="18" height="13" rx="3"/><circle cx="12" cy="13.5" r="3.6"/><path d="M8.5 7l1.6-2.6h3.8L15.5 7"/>'),
+  book: SVGI('<path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5C4.7 20 4 19.3 4 18.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/>'),
+  game: SVGI('<path d="M7 8h10a4 4 0 0 1 4 4l-.6 4a2.5 2.5 0 0 1-4.3 1.3L14.5 16h-5l-1.6 1.3A2.5 2.5 0 0 1 3.6 16L3 12a4 4 0 0 1 4-4z"/><path d="M7.5 11v3M6 12.5h3"/><circle cx="16" cy="11.5" r=".8" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".8" fill="currentColor"/>'),
+  food: SVGI('<path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M8 7c0-1.5 1-2 1-3.5M12 7c0-1.5 1-2 1-3.5M16 7c0-1.5 1-2 1-3.5"/>'),
+  plane: SVGI('<path d="M10.5 13.5L3 11l1.5-1.5 8 .5 4-4c1-1 2.6-1.2 3.2-.6s.4 2.2-.6 3.2l-4 4 .5 8L14 22l-2.5-7.5"/>'),
+  star: SVGI('<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>'),
+  paw: SVGI('<ellipse cx="12" cy="16" rx="4.6" ry="3.8"/><circle cx="6" cy="10.5" r="1.9"/><circle cx="9.8" cy="6.8" r="1.9"/><circle cx="14.2" cy="6.8" r="1.9"/><circle cx="18" cy="10.5" r="1.9"/>'),
+  gift: SVGI('<rect x="3.5" y="9" width="17" height="11.5" rx="2"/><path d="M2.5 9h19M12 9v11.5"/><path d="M12 9C10 4 6 5 7.5 8M12 9c2-5 6-4 4.5-1"/>'),
+  arrow: SVGI('<path d="M7 17L17 7M9 7h8v8"/>')
+};
+const ICON_KEYS = ["film","tv","music","play","phone","bubble","hearts","camera","book","game","food","plane","star","paw"];
+function iconOf(c){
+  if(c && ICONS[c.icon]) return c.icon;
+  const n = (c && c.name || "").toLowerCase();
+  if(/s[ée]rie/.test(n)) return "tv"; if(/film|cin[ée]/.test(n)) return "film";
+  if(/musi|album|son|playlist|chanson|podcast/.test(n)) return "music"; if(/youtube|vid[ée]o/.test(n)) return "play";
+  if(/tiktok|insta|reel/.test(n)) return "phone"; if(/anecdote|histoire|mot/.test(n)) return "bubble";
+  if(/nous|deux|amiti/.test(n)) return "hearts"; if(/photo|souvenir/.test(n)) return "camera";
+  if(/livre|lecture|book/.test(n)) return "book"; if(/jeu|game/.test(n)) return "game";
+  if(/recette|cuisine|resto|food/.test(n)) return "food"; if(/voyage|endroit|lieu/.test(n)) return "plane";
+  return "star";
+}
+
 /* Petits visages pour le style « Pastille » */
 const FACES = [
   '<svg viewBox="0 0 60 30"><ellipse cx="16" cy="13" rx="6" ry="7" fill="#1f1b2e"/><ellipse cx="44" cy="13" rx="6" ry="7" fill="#1f1b2e"/><circle cx="18" cy="10" r="2" fill="#fff"/><circle cx="46" cy="10" r="2" fill="#fff"/><path d="M25 20 q5 5 10 0" fill="none" stroke="#1f1b2e" stroke-width="2.6" stroke-linecap="round"/></svg>',
@@ -628,6 +799,7 @@ const FONTS = {
     fredoka: {label:"Fredoka", css:'"Fredoka"', g:"Fredoka:wght@500;700"},
     jakarta: {label:"Plus Jakarta Sans", css:'"Plus Jakarta Sans"', g:"Plus+Jakarta+Sans:wght@400;600;800"},
     youngd:  {label:"Young Serif", css:'"Young Serif"', g:"Young+Serif"},
+    anton:   {label:"Anton", css:'"Anton"', g:"Anton"},
     baloo:   {label:"Baloo", css:'"Baloo 2"', g:"Baloo+2:wght@600;800"}
   },
   body: {
@@ -642,20 +814,22 @@ const FONTS = {
     gaegu:   {label:"Gaegu", css:'"Gaegu"', g:"Gaegu:wght@400;700"},
     caveat:  {label:"Caveat", css:'"Caveat"', g:"Caveat:wght@400;600"},
     patrick: {label:"Patrick Hand", css:'"Patrick Hand"', g:"Patrick+Hand"},
+    caveatb: {label:"Caveat épais", css:'"Caveat"', g:"Caveat:wght@600;700"},
     texte:   {label:"Comme le texte", css:null}
   }
 };
 const INK_DEFAULT = "#33402f";
 const presetColors = k => { const t = THEMES[k] || THEMES.sauge; return {bg:t.bg, accent:t.accent, deep:t.deep, ink:INK_DEFAULT, card:"#ffffff"}; };
-const DEFAULT_LOOK = {skin:"carnet", fontDisplay:"matcha", fontBody:"fraunces", fontHand:"gaegu", fontScale:1, colors:null};
+const DEFAULT_LOOK = {skin:"coloc", fontDisplay:"anton", fontBody:"jakarta", fontHand:"caveatb", fontScale:1, colors:null};
 const SKINS = {
+  coloc:    {label:"Coloc", desc:"Titre géant, polaroïds, calendrier", look:{fontDisplay:"anton", fontBody:"jakarta", fontHand:"caveatb"}, colors:{bg:"#f4f6ee", accent:"#e98aa5", deep:"#56704b", ink:"#2f3a2b", card:"#fffdf8"}},
   carnet:   {label:"Carnet", desc:"Pois, contours épais, cartes scotchées", look:{fontDisplay:"matcha", fontBody:"fraunces", fontHand:"gaegu"}, colors:{bg:"#f1f6ec", accent:"#b3c6a5", deep:"#56704b", ink:"#33402f", card:"#ffffff"}},
   pastille: {label:"Pastille", desc:"Moderne, doux, petits visages", look:{fontDisplay:"jakarta", fontBody:"jakarta", fontHand:"gaegu"}, colors:{bg:"#f7f6fb", accent:"#b9a6f5", deep:"#6d3fd6", ink:"#1f1b2e", card:"#ffffff"}},
   papeterie:{label:"Papeterie", desc:"Crème, cercles, grands titres", look:{fontDisplay:"fraunces", fontBody:"jakarta", fontHand:"gaegu"}, colors:{bg:"#fbf6ee", accent:"#f6c9cf", deep:"#e0382c", ink:"#2a2320", card:"#ffffff"}},
   argile:   {label:"Argile", desc:"Arches, festons, sauge et bordeaux", look:{fontDisplay:"youngd", fontBody:"jakarta", fontHand:"gaegu"}, colors:{bg:"#f6eee2", accent:"#a9bd9c", deep:"#7b2e3d", ink:"#4a1f28", card:"#fffaf2"}},
   festival: {label:"Festival", desc:"Bandeaux festonnés, ruban qui défile", look:{fontDisplay:"bagel", fontBody:"jakarta", fontHand:"gaegu"}, colors:{bg:"#fbf7f2", accent:"#e9c6ec", deep:"#e8743b", ink:"#2d2a32", card:"#ffffff"}}
 };
-function siteColors(s){ s = s || state.settings; const c = s.colors; return c && isHex(c.accent) ? {...presetColors("sauge"), ...c} : presetColors(s.ambiance || "sauge"); }
+function siteColors(s){ s = s || state.settings; const c = s.colors; if(c && isHex(c.accent)) return {...presetColors("sauge"), ...c}; if(s.ambiance) return presetColors(s.ambiance); const sk = SKINS[s.skin || DEFAULT_LOOK.skin]; return sk ? {...sk.colors} : presetColors("sauge"); }
 function applyAppearance(s){
   s = {...DEFAULT_LOOK, ...(s || {})};
   const d = FONTS.display[s.fontDisplay] || FONTS.display.matcha;
@@ -672,7 +846,10 @@ function applyAppearance(s){
   root.setProperty("--muted", mixHex(col.ink, col.bg, .38)); root.setProperty("--line", mixHex(col.ink, col.bg, .84));
   root.setProperty("--paper", col.bg);
   document.documentElement.dataset.skin = SKINS[s.skin] ? s.skin : "carnet";
-  const fams = [...new Set([d.g, b.g, h.g].filter(Boolean))];
+  const fams = [...new Set([d.g, b.g, h.g, (SKINS[s.skin] ? s.skin : "coloc") === "coloc" ? "Yellowtail" : null].filter(Boolean))];
+  root.setProperty("--grid", mixHex(col.deep, col.bg, .88));
+  root.setProperty("--t1", mixHex(col.deep, col.bg, .84)); root.setProperty("--t2", mixHex(col.accent, col.bg, .55));
+  root.setProperty("--t3", mixHex("#e8c36a", col.bg, .62)); root.setProperty("--t4", mixHex(col.deep, col.bg, .7));
   let link = document.getElementById("gf");
   if(!link){ link = document.createElement("link"); link.id = "gf"; link.rel = "stylesheet"; document.head.appendChild(link); }
   const href = fams.length ? "https://fonts.googleapis.com/css2?" + fams.map(f => "family=" + f).join("&") + "&display=swap" : "";
@@ -1114,11 +1291,13 @@ function parseHash(){
   if(h.startsWith("d-")) return {page:"domain", id:h.slice(2)};
   if(h.startsWith("l-")) return {page:"list", id:h.slice(2)};
   if(h === "favoris") return {page:"fav"};
+  if(h === "cadeaux") return {page:"gifts"};
+  if(h === "a-regarder") return {page:"watch"};
   return {page:"home"};
 }
 function go(route){
   state.route = route; state.mood = null;
-  const h = route.page === "domain" ? "d-"+route.id : route.page === "list" ? "l-"+route.id : route.page === "fav" ? "favoris" : "";
+  const h = route.page === "domain" ? "d-"+route.id : route.page === "list" ? "l-"+route.id : route.page === "fav" ? "favoris" : route.page === "gifts" ? "cadeaux" : route.page === "watch" ? "a-regarder" : "";
   if(("#"+h) !== location.hash){
     if(h) location.hash = h; else history.pushState(null, "", location.pathname + location.search);
   }
@@ -1160,9 +1339,106 @@ function render(){
   if(r.page === "domain") renderDomain(catById(r.id));
   else if(r.page === "list") renderList(listById(r.id));
   else if(r.page === "fav") renderFav();
+  else if(r.page === "gifts") renderPick("Mes cadeaux", "Tout ce qui t'attend, encore emballé.", state.items.filter(isWrapped), "Plus aucun paquet à ouvrir. Tout est déballé !");
+  else if(r.page === "watch") renderPick("Ma liste à regarder", "Ce qu'on t'a conseillé et que tu n'as pas encore coché « vu ».", toWatch(), "Tu as tout vu. Impressionnant.");
+  else if(skinNow() === "coloc") renderHomeColoc();
   else renderHome();
   $("#head").insertAdjacentHTML("afterbegin", topbar());
   renderMovebar(); renderSync(); hydratePhotos();
+  document.querySelectorAll(".week").forEach(w => { w.scrollLeft = w.scrollWidth; });
+}
+
+const skinNow = () => { const s = state.settings || {}; return SKINS[s.skin] ? s.skin : DEFAULT_LOOK.skin; };
+const DAY = 86400000;
+function startOfDay(ts){ const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+function toWatch(){ return state.items.filter(i => isMedia(i) && i.author !== state.me && !(i.seenBy || []).includes(state.me)).sort((a,b) => (b.createdAt||0) - (a.createdAt||0)); }
+function renderPick(title, sub, items, empty){
+  applyPageTheme(null);
+  $("#head").innerHTML = '<header class="hero"><a class="crumb" href="#" data-act="home">← Accueil</a><h1>'+esc(title)+'</h1><p class="sub">'+esc(sub)+'</p></header>';
+  $("#main").innerHTML = items.length ? wallHTML(items, "fav") : emptyHTML(title, empty);
+}
+function openDay(t){
+  const items = state.items.filter(i => i.createdAt && startOfDay(i.createdAt) === t).sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+  const label = new Date(t).toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"});
+  openModal('<h2>'+esc(label)+'</h2>' + (items.length ? '<div class="modal-wall">'+wallHTML(items, "fav")+'</div>' : '<p>Rien ce jour-là.</p>') + '<div class="sheet-actions"><button class="btn" data-act="close">Fermer</button></div>');
+}
+function weekHTML(){
+  const today = startOfDay(Date.now());
+  const monday = today - 6 * DAY;
+  let h = '<div class="week" role="list">';
+  for(let i = 0; i < 7; i++){
+    const t = startOfDay(monday + i * DAY + 3 * 3600000);
+    const d = new Date(t);
+    const its = state.items.filter(x => x.createdAt && startOfDay(x.createdAt) === t);
+    const name = d.toLocaleDateString("fr-FR", {weekday:"short"}).replace(".", "").toUpperCase();
+    h += '<button class="day'+(t === today ? ' today' : '')+(its.length ? '' : ' off')+(t > today ? ' future' : '')+'" data-act="day" data-t="'+t+'" role="listitem">'
+      + '<span class="d"><span>'+(t === today ? "AUJ." : esc(name))+'</span><span>'+String(d.getDate()).padStart(2,"0")+'</span></span>'
+      + (its.length ? '<span class="ics">'+its.slice(0,6).map(x => { const c = catById(x.cat); return '<i style="background:'+(isWrapped(x) ? "var(--accent)" : themeOf(c).deep)+'" title="'+esc(c ? c.name : "")+'">'+(isWrapped(x) ? ICONS.gift : ICONS[iconOf(c)])+'</i>'; }).join("")+(its.length > 6 ? '<b>+'+(its.length-6)+'</b>' : '')+'</span><u>'+plural(its.length, "ajout", "ajouts")+'</u>'
+        : (t > today ? '' : '<u>Rien ce jour-là</u>'))
+      + '</button>';
+  }
+  return h + '</div>';
+}
+function polaroid(content, caption, cls, attrs){ return '<figure class="pol '+(cls||"")+'" '+(attrs||"")+'><span class="ptape" aria-hidden="true"></span>'+content+'<figcaption>'+esc(caption)+'</figcaption></figure>'; }
+const STICKER = (txt, cls) => '<span class="sticker '+(cls||"")+'">'+txt+'</span>';
+function renderHomeColoc(){
+  applyPageTheme(null);
+  document.body.setAttribute("style", "");
+  const s = state.settings;
+  const title = (s.title || DEFAULT_SETTINGS.title).trim();
+  const words = title.split(/\s+/);
+  const gifts = state.items.filter(isWrapped);
+  const both = people();
+  const seenBoth = state.items.filter(i => both.length > 1 && both.every(p => (i.seenBy || []).includes(p))).length;
+  const words_n = state.items.reduce((n, i) => n + (i.replies || []).length, 0) + state.lists.reduce((n, l) => n + (l.replies || []).length, 0);
+  const first = state.items.reduce((m, i) => i.createdAt && i.createdAt < m ? i.createdAt : m, Date.now());
+  const days = Math.max(1, Math.floor((startOfDay(Date.now()) - startOfDay(s.since || first)) / DAY) + 1);
+  const daily = dailyPick();
+  const lastPoster = [...state.items].filter(i => !isWrapped(i) && (i.posterUrl || i.photoId) && (!daily || i.id !== daily.id)).sort((a,b) => (b.createdAt||0) - (a.createdAt||0))[0];
+  const nav = '<nav class="cnav"><div class="clogo">'+esc(words.slice(0, Math.ceil(words.length/2)).join(" "))+'<br>'+esc(words.slice(Math.ceil(words.length/2)).join(" "))+'</div>'
+    + '<div class="clinks"><a href="#domaines" data-act="scroll-domains">Domaines</a><a href="#cadeaux" data-act="open-gifts">Cadeaux'+(gifts.length ? '<b>'+gifts.length+'</b>' : '')+'</a><a href="#a-regarder" data-act="open-watch">À regarder</a><a href="#favoris" data-act="open-fav">Favoris</a><a href="#" data-act="reglages">Réglages</a></div>'
+    + '<button class="btn primary" data-act="add">'+PAW+' Ajouter</button></nav>';
+  const stack = '<div class="cstack">'
+    + '<div class="perch">'+CAT_SVG("cat")+'</div>'
+    + (daily ? polaroid(photoTag(daily.photoId, "", daily.title || "Photo du jour"), "photo du jour ♡", "big", 'data-act="show-item" data-id="'+esc(daily.id)+'" role="button" tabindex="0"')
+             : '<button class="pol big empty" data-act="add-photo"><span class="ptape" aria-hidden="true"></span><span class="ph-empty">'+ICONS.camera+'<span>Ajoute une photo :<br>chaque jour, l\'une d\'elles s\'affichera ici.</span></span><figcaption>photo du jour ♡</figcaption></button>')
+    + (lastPoster ? polaroid(lastPoster.posterUrl ? '<img src="'+esc(safeImg(lastPoster.posterUrl) || "")+'" alt="" referrerpolicy="no-referrer">' : photoTag(lastPoster.photoId, "", ""), (lastPoster.title || "").toLowerCase().slice(0, 28), "small", 'data-act="show-item" data-id="'+esc(lastPoster.id)+'" role="button" tabindex="0"') : '')
+    + (gifts.length ? '<a href="#cadeaux" data-act="open-gifts" class="stk-link">'+STICKER(plural(gifts.length, "cadeau", "cadeaux")+'<br>à ouvrir', "s1")+'</a>' : STICKER("coucou ♡", "s1"))
+    + '<button class="capy" data-act="capy" aria-label="Quelque chose se cache ici">'+CAPY_SVG+'</button>'
+    + '</div>';
+  $("#head").innerHTML = nav + '<header class="chero">'
+    + '<div class="doodles">'+DOODLES.map(d => '<span class="doodle doodle-'+esc(d.name)+'" style="'+d.style+'" title="'+esc(d.title||"")+'">'+d.svg+'</span>').join("")+'</div>'
+    + '<div class="ctext"><h1 class="ctitle">'+words.map(w => '<span>'+esc(w)+'</span>').join("")+'</h1><span class="cscript">'+esc(s.script || "à deux")+'</span>'
+    + introHTML(s)
+    + '<div class="hero-actions">'+(gifts.length ? '<a class="btn primary" href="#cadeaux" data-act="open-gifts">Ouvrir mes cadeaux →</a>' : '<button class="btn primary" data-act="add">'+PAW+' Ajouter un petit truc</button>')+'<button class="btn small" data-act="settings">Personnaliser</button></div></div>'
+    + stack + '</header>';
+
+  const cats = sortedCats();
+  let h = '<section class="nums">'
+    + '<a class="num" href="#cadeaux" data-act="open-gifts"><b>'+gifts.length+'</b><span>'+(gifts.length > 1 ? "cadeaux" : "cadeau")+' à ouvrir</span></a>'
+    + '<div class="num"><b>'+seenBoth+'</b><span>vus à deux</span></div>'
+    + '<div class="num"><b>'+words_n+'</b><span>'+(words_n > 1 ? "petits mots" : "petit mot")+'</span></div>'
+    + '<div class="num"><b>'+days+'</b><span>'+(days > 1 ? "jours" : "jour")+' de coloc</span></div></section>';
+  h += '<section class="ticket"><div class="tin"><h3>Ce qu\'on s\'est envoyé</h3><h2>Ces 7 derniers jours</h2>'+weekHTML()+'</div></section>';
+  h += '<div class="chead" id="domaines"><h2>Nos domaines</h2><button class="btn small" data-act="new-domain">+ Nouveau domaine</button></div><div class="ccards">';
+  for(const c of cats){
+    const th = themeOf(c), n = state.items.filter(i => i.cat === c.id).length, g = state.items.filter(i => i.cat === c.id && isWrapped(i)).length;
+    h += '<a class="ccard" href="#d-'+esc(c.id)+'" data-act="open-domain" data-id="'+esc(c.id)+'" draggable="true" data-drag="cat:'+esc(c.id)+'" data-drop="cat:'+esc(c.id)+'" style="--dc:'+th.accent+';--dd:'+th.deep+'">'
+      + (c.coverId ? photoTag(c.coverId, "ccover", "") : '')
+      + '<small>'+plural(n, "petit truc", "petits trucs")+'</small><strong>'+esc(c.name)+'</strong>'+(c.desc ? '<em>'+esc(c.desc)+'</em>' : '')
+      + '<span class="big">'+ICONS[iconOf(c)]+'</span>'
+      + (g ? STICKER(plural(g, "cadeau", "cadeaux"), "s2") : '')
+      + '<span class="go">'+ICONS.arrow+'</span></a>';
+  }
+  h += '</div>';
+  if(cats.length > 1) h += '<p class="tip">Sur ordinateur, glisse une carte pour changer l\'ordre, ou glisse une fiche dessus pour la ranger.</p>';
+  const tw = toWatch();
+  const twp = tw.filter(i => !isWrapped(i) && (i.posterUrl || ytId(i.url))).slice(0, 2);
+  h += '<section class="watchbox"><div class="wl"><small>Films · séries · sons</small><h2>Ta liste<br>à regarder</h2><p>'+(tw.length ? plural(tw.length, "chose conseillée", "choses conseillées")+' que tu n\'as pas encore cochée'+(tw.length > 1 ? 's' : '')+' « vu ».' : 'Tout est vu pour le moment. Bravo.')+'</p><a class="btn primary" href="#a-regarder" data-act="open-watch">Voir la liste</a></div>'
+    + '<div class="wr">'+(twp.length ? twp.map((i, k) => polaroid('<img src="'+esc(safeImg(posterOf(i)) || "")+'" alt="" referrerpolicy="no-referrer">', (i.title||"").toLowerCase().slice(0, 24), "w"+k, 'data-act="show-item" data-id="'+esc(i.id)+'" role="button" tabindex="0"')).join("") : '<span class="wr-empty">'+ICONS.film+'</span>')+'</div></section>';
+  const latest = [...state.items].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,6);
+  if(latest.length) h += '<div class="chead"><h2>Derniers petits trucs</h2></div>' + wallHTML(latest, "home");
+  $("#main").innerHTML = h;
 }
 
 function renderHome(){
@@ -1630,6 +1906,7 @@ function domainForm(c){
     + '<div class="field"><label for="d-desc">Petit mot du domaine</label><input type="text" id="d-desc" maxlength="120" value="'+esc(c.desc||"")+'" placeholder="Facultatif"></div>'
     + '<div class="field"><span class="lbl">Couleur</span><div class="swatches named" id="d-themes"></div></div>'
     + '<div class="field"><span class="lbl">Motif</span><div class="swatches named" id="d-pats"></div></div>'
+    + '<div class="field"><span class="lbl">Icône</span><div class="iconpick" id="d-icons"></div></div>'
     + '<div class="field"><label for="d-lw">Nom des listes dans ce domaine</label><input type="text" id="d-lw" maxlength="24" value="'+esc(c.listLabel||"")+'" placeholder="'+esc(listWord(c))+'"><span class="help">Par exemple Playlists, Listes, Collections…</span></div>'
     + photoInputHTML("Image de couverture", "d-cover")
     + '<div class="sheet-actions">'+(editing ? (n ? '<span class="help" style="margin-right:auto">Vide ce domaine pour pouvoir le retirer.</span>' : '<button type="button" class="btn ghost" id="d-del">Retirer le domaine</button>') : '')
@@ -1647,13 +1924,18 @@ function domainForm(c){
     tbox.addEventListener("input", e => { if(e.target.id === "d-custom"){ custom = e.target.value; theme = "custom"; const lab = e.target.closest(".sw-custom"); lab.style.background = custom; lab.setAttribute("aria-pressed","true"); tbox.querySelectorAll("[data-theme]").forEach(x => x.setAttribute("aria-pressed","false")); const th = themeFromColor(custom); pbox.querySelectorAll("[data-pat]").forEach(x => x.setAttribute("style", "background-color:"+th.accent+";"+patternCSS(x.dataset.pat, th, true))); } });
     tbox.addEventListener("change", e => { if(e.target.id === "d-custom") draw(); });
     pbox.addEventListener("click", e => { const b = e.target.closest("[data-pat]"); if(b){ pattern = b.dataset.pat; draw(); }});
+    let icon = iconOf(c);
+    const ibox = sheet.querySelector("#d-icons");
+    const drawIcons = () => { ibox.innerHTML = ICON_KEYS.map(k => '<button type="button" data-icon="'+k+'" aria-pressed="'+(k===icon)+'" aria-label="Icône '+k+'">'+ICONS[k]+'</button>').join(""); };
+    drawIcons();
+    ibox.addEventListener("click", e => { const b = e.target.closest("[data-icon]"); if(b){ icon = b.dataset.icon; drawIcons(); }});
     const getCover = photoField(sheet, c.coverId, "#d-save");
     const del = sheet.querySelector("#d-del");
     if(del) del.addEventListener("click", () => confirmBox("Retirer ce domaine ?", "« "+c.name+" » et ses "+listWord(c).toLowerCase()+" vides disparaîtront.", () => { W.delCat(c.id).catch(() => {}); go({page:"home"}); }));
     sheet.querySelector("#domForm").addEventListener("submit", e => {
       e.preventDefault();
       const name = sheet.querySelector("#d-name").value.trim(); if(!name){ toast("Donne un nom au domaine."); return; }
-      const data = {name, desc: sheet.querySelector("#d-desc").value.trim(), theme, custom: theme === "custom" ? custom : null, pattern, coverId: getCover() || null, listLabel: sheet.querySelector("#d-lw").value.trim()};
+      const data = {name, desc: sheet.querySelector("#d-desc").value.trim(), theme, custom: theme === "custom" ? custom : null, icon, pattern, coverId: getCover() || null, listLabel: sheet.querySelector("#d-lw").value.trim()};
       if(editing) W.updCat(c.id, data).catch(() => {});
       else W.addCat({...data, id: uid(), order: Math.max(0, ...state.cats.map(ordKey)) + 1}).catch(() => {});
       closeModal();
@@ -1788,6 +2070,7 @@ function reglagesForm(){
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-act]"); if(!el) return;
   const act = el.dataset.act;
+  if(el.tagName === "A" && el.getAttribute("href") === "#") e.preventDefault();
   if(act === "close-bg"){ if(e.target === el) closeModal(); return; }
   if(act === "close"){ closeModal(); return; }
   if(act === "reload"){ location.reload(); return; }
@@ -1798,6 +2081,11 @@ document.addEventListener("click", e => {
   if(act === "open-domain"){ go({page:"domain", id:el.dataset.id}); return; }
   if(act === "open-list"){ go({page:"list", id:el.dataset.id}); return; }
   if(act === "open-fav"){ go({page:"fav"}); return; }
+  if(act === "open-gifts"){ e.preventDefault(); go({page:"gifts"}); return; }
+  if(act === "open-watch"){ e.preventDefault(); go({page:"watch"}); return; }
+  if(act === "scroll-domains"){ e.preventDefault(); const t = document.getElementById("domaines"); if(t) t.scrollIntoView({behavior:"smooth"}); return; }
+  if(act === "day"){ openDay(+el.dataset.t); return; }
+  if(act === "show-item"){ const it = state.items.find(i => i.id === el.dataset.id); if(it) openModal('<div class="modal-wall">'+wallHTML([it], "fav")+'</div><div class="sheet-actions"><button class="btn" data-act="close">Fermer</button></div>'); return; }
   if(act === "mood"){ const m = el.dataset.m; state.mood = (!m || state.mood === m) ? null : m; render(); return; }
   if(act === "add"){ if(!state.cats.length){ toast("Crée d'abord un domaine."); domainForm(null); } else itemForm(null); return; }
   if(act === "edit"){ const it = state.items.find(i => i.id === el.dataset.id); if(it) itemForm(it); return; }
