@@ -853,6 +853,10 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 .indaily{margin-top:-4px}
 .indaily .help{display:inline;margin-left:2px}
 .field:has(.ph-prev:empty)+.indaily{display:none}
+/* Shorts et TikTok : miniature verticale */
+.card img.poster.vertical{aspect-ratio:9/16;width:min(100%,220px);height:auto;max-height:none;object-fit:cover;object-position:center;justify-self:center;border-radius:14px}
+html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
+.card img.poster.broken{display:none}
 
 </style>
 
@@ -877,7 +881,7 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 
 </script>
 <script>
-const APP_VERSION = "16/11 à 13h20";
+const APP_VERSION = "16/11 à 13h38";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1610,13 +1614,19 @@ const listWord = c => (c && c.listLabel) || (/musi|son|chanson|playlist/i.test(c
 const listWordOne = c => listWord(c).toLowerCase().replace(/s$/,"");
 const canWrite = () => state.phase === "app";
 
-function linkInfo(u){
+function linkInfo(u, cat){
+  const pod = /podcast/i.test(cat && cat.name || "");
   let url; try{ url = new URL(String(u||"").trim()); }catch(e){ return null; }
   if(!/^https?:$/.test(url.protocol)) return null;
   const h = url.hostname.replace(/^www\./,"");
+  if(pod){
+    const app = /spotify/.test(h) ? "Spotify" : /apple\.com$/.test(h) ? "Apple Podcasts" : /deezer/.test(h) ? "Deezer" : /youtube|youtu\.be/.test(h) ? "YouTube" : "";
+    return {links:[{label: app ? "Écouter sur " + app : "Écouter", href:url.href, primary:true}]};
+  }
   if(/(^|\.)spotify\.com$|^spotify\.link$|(^|\.)tidal\.com$|(^|\.)deezer\.com$|^deezer\.page\.link$|^music\.apple\.com$|^music\.youtube\.com$|(^|\.)soundcloud\.com$/.test(h))
     return {links:[{label:"Écouter dans ton appli", href:"https://song.link/"+url.href, primary:true},{label:"Lien d'origine", href:url.href}], hint:"Choisis Spotify, Tidal, Deezer… sur la page qui s'ouvre."};
   if(/(^|\.)tiktok\.com$/.test(h)) return {links:[{label:"Voir la vidéo", href:url.href, primary:true}], hint:"S'ouvre dans le navigateur, pas besoin de l'appli TikTok."};
+  if(/(^|\.)youtube\.com$/.test(h) && /^\/shorts\//.test(url.pathname)) return {links:[{label:"Voir le short", href:url.href, primary:true}]};
   if(/(^|\.)youtube\.com$|^youtu\.be$/.test(h)) return {links:[{label:"Regarder sur YouTube", href:url.href, primary:true}]};
   return {links:[{label:"Ouvrir le lien", href:url.href, primary:true}]};
 }
@@ -1878,9 +1888,8 @@ function giftHTML(it, idx, ctx){
 const POSTER_KINDS = {
   movie:  {label:"Film",    q:"media=movie&entity=movie"},
   tv:     {label:"Série",   q:"media=tvShow&entity=tvSeason"},
-  music:  {label:"Musique", q:"media=music&entity=song"},
-  album:  {label:"Album",   q:"media=music&entity=album"},
-  song:   {label:"Morceau", q:"media=music&entity=song"},
+  music:  {label:"Titre (musique)", q:"media=music&entity=song"},
+  album:  {label:"Album entier", q:"media=music&entity=album"},
   ebook:  {label:"Livre",   q:"media=ebook&entity=ebook"},
   podcast:{label:"Podcast", q:"media=podcast&entity=podcast"}
 };
@@ -1978,6 +1987,8 @@ async function lookupMusic(url){
 }
 function musicButtons(it){
   const L = Object.assign(buildMusicLinks(it.url && platformOf(it.url) ? it.url : "", it.title, it.artist), it.links || {});
+  const cn = (catById(it.cat) || {}).name || "";
+  if(/film|cin[ée]|s[ée]rie|livre|lecture|book|podcast|youtube|tiktok|vid[ée]o|short/i.test(cn)) return "";
   const isMusic = it.artist || (it.links && Object.keys(it.links).length) || platformOf(it.url || "") === "spotify" || platformOf(it.url || "") === "tidal" || /music\.youtube/.test(it.url || "");
   if(!isMusic) return "";
   const btns = PLATFORMS.filter(([p]) => L[p] && L[p].url).map(([p, label]) => {
@@ -2004,12 +2015,24 @@ async function fromTVmaze(term){
 }
 async function fromDeezer(term, what){
   const j = await jsonp("https://api.deezer.com/search/" + what + "?q=" + encodeURIComponent(term) + "&limit=12&output=jsonp");
-  return (j && j.data || []).map(r => what === "track" ? {url:r.album && (r.album.cover_xl || r.album.cover_big), title:r.title, artist:r.artist && r.artist.name, link:r.link, sub:[r.artist && r.artist.name, r.album && r.album.title, "titre"].filter(Boolean).join(" · ")}
+  return (j && j.data || []).map(r => what === "track" ? {url:r.album && (r.album.cover_xl || r.album.cover_big), title:r.title, artist:r.artist && r.artist.name, link:r.link, sub:[r.artist && r.artist.name, r.album && r.album.title && r.album.title !== r.title ? "sur « " + r.album.title + " »" : "single"].filter(Boolean).join(" · ")}
     : {url:r.cover_xl || r.cover_big, title:r.title, artist:r.artist && r.artist.name, link:r.link, single: r.record_type === "single", sub:[r.artist && r.artist.name, r.record_type === "single" ? "pochette du single" : "album"].filter(Boolean).join(" · ")}).filter(r => r.url);
+}
+async function fromGoogleBooks(term){
+  const j = await fetchJSON("https://www.googleapis.com/books/v1/volumes?q=" + encodeURIComponent(term) + "&printType=books&maxResults=20&langRestrict=fr");
+  return (j.items || []).map(v => v.volumeInfo || {}).filter(v => v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail)).map(v => ({
+    url: (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail).replace(/^http:/, "https:").replace(/&edge=curl/, ""),
+    title: v.title + (v.subtitle ? " : " + v.subtitle : ""), artist: (v.authors || []).join(", "),
+    sub: [(v.authors || []).join(", "), yr(v.publishedDate), v.publisher].filter(Boolean).join(" · ")
+  }));
+}
+async function fromDeezerPodcast(term){
+  const j = await jsonp("https://api.deezer.com/search/podcast?q=" + encodeURIComponent(term) + "&limit=10&output=jsonp");
+  return (j && j.data || []).filter(r => r.picture_xl || r.picture_big).map(r => ({url: r.picture_xl || r.picture_big, title: r.title, link: r.link, sub: "Podcast · Deezer"}));
 }
 async function fromOpenLibrary(term){
   const j = await fetchJSON("https://openlibrary.org/search.json?q=" + encodeURIComponent(term) + "&limit=12&fields=title,author_name,first_publish_year,cover_i");
-  return (j.docs || []).filter(d => d.cover_i).map(d => ({url:"https://covers.openlibrary.org/b/id/" + d.cover_i + "-L.jpg", title:d.title, sub:[(d.author_name || [])[0], d.first_publish_year].filter(Boolean).join(" · ")}));
+  return (j.docs || []).filter(d => d.cover_i).map(d => ({url:"https://covers.openlibrary.org/b/id/" + d.cover_i + "-L.jpg", title:d.title, artist:(d.author_name || [])[0], sub:[(d.author_name || [])[0], d.first_publish_year].filter(Boolean).join(" · ")}));
 }
 async function fromITunes(term, kind){
   const k = POSTER_KINDS[kind] || POSTER_KINDS.movie;
@@ -2040,17 +2063,17 @@ async function searchPosters(term, kind){
   const jobs = {
     movie:   [() => fromTMDB(term, "movie"), () => fromITunes(term, "movie")],
     tv:      [() => fromTMDB(term, "tv"), () => fromTVmaze(term), () => fromITunes(term, "tv")],
-    music:   [() => fromDeezer(term, "album"), () => fromDeezer(term, "track"), () => fromITunes(term, "music")],
-    album:   [() => fromDeezer(term, "album"), () => fromITunes(term, "album")],
-    song:    [() => fromDeezer(term, "track"), () => fromITunes(term, "song")],
-    ebook:   [() => fromOpenLibrary(term), () => fromITunes(term, "ebook")],
-    podcast: [() => fromITunes(term, "podcast")]
+    music:   [() => fromDeezer(term, "track"), () => fromITunes(term, "music")],
+    song:    [() => fromDeezer(term, "track"), () => fromITunes(term, "music")],
+    album:   [() => fromDeezer(term, "album").then(l => l.filter(r => !r.single)), () => fromITunes(term, "album").then(l => l.filter(r => !/ - (Single|EP)$/i.test(r.title)))],
+    ebook:   [() => fromGoogleBooks(term), () => fromOpenLibrary(term), () => fromITunes(term, "ebook")],
+    podcast: [() => fromITunes(term, "podcast"), () => fromDeezerPodcast(term)]
   }[kind] || [() => fromTMDB(term, "movie"), () => fromITunes(term, "movie")];
   const settled = await Promise.allSettled(jobs.map(j => j()));
   const seen = new Set(), out = [];
   settled.forEach(s => { if(s.status === "fulfilled") s.value.forEach(r => { const k = r.url + "|" + (r.title || "").toLowerCase(); if(r.url && !seen.has(k)){ seen.add(k); out.push(r); } }); });
   if(!out.length && settled.every(s => s.status === "rejected")) throw new Error("aucune source");
-  return (kind === "music" || kind === "song" || kind === "album" ? singlesFirst(term, out) : out).slice(0, 24);
+  return (kind === "music" || kind === "song" ? singlesFirst(term, out) : out).slice(0, 24);
 }
 function ytId(u){
   try{
@@ -2063,6 +2086,27 @@ function ytId(u){
   }catch(e){}
   return null;
 }
+function platformOfVideo(u){ try{ const h = new URL(String(u||"").trim()).hostname.replace(/^www\.|^m\./, ""); if(/(^|\.)tiktok\.com$/.test(h)) return "tiktok"; if(/(^|\.)youtube\.com$|^youtu\.be$/.test(h)) return "youtube"; }catch(e){} return ""; }
+function isVertical(u){ return platformOfVideo(u) === "tiktok" || /youtube\.com\/shorts\//.test(String(u || "")); }
+async function lookupVideo(url){
+  const kind = platformOfVideo(url);
+  const tries = kind === "tiktok" ? ["https://www.tiktok.com/oembed?url=" + encodeURIComponent(url), "https://noembed.com/embed?url=" + encodeURIComponent(url)]
+    : ["https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent(url), "https://noembed.com/embed?url=" + encodeURIComponent(url)];
+  for(const t of tries){
+    try{ const r = await fetchJSON(t); if(r && !r.error && (r.title || r.thumbnail_url)) return {title: (r.title || "").trim(), author: (r.author_name || "").replace(/ - Topic$/, ""), thumb: r.thumbnail_url || ""}; }catch(e){}
+  }
+  return null;
+}
+/* Les miniatures TikTok expirent : on en redemande une si l'image ne charge plus */
+const ttRefreshed = new Map();
+document.addEventListener("error", async e => {
+  const img = e.target; if(!img || img.tagName !== "IMG" || !img.dataset.tt || img.dataset.ttTried) return;
+  img.dataset.ttTried = "1";
+  const u = img.dataset.tt;
+  let thumb = ttRefreshed.get(u);
+  if(thumb === undefined){ const r = await lookupVideo(u); thumb = r && r.thumb || ""; ttRefreshed.set(u, thumb); }
+  if(thumb) img.src = thumb; else img.classList.add("broken");
+}, true);
 const posterOf = it => it.posterUrl || (ytId(it.url) ? "https://i.ytimg.com/vi/" + ytId(it.url) + "/hqdefault.jpg" : null);
 const capFirst = t => { t = String(t || ""); return t.charAt(0).toLocaleUpperCase("fr") + t.slice(1); };
 const safeImg = u => /^https:\/\//.test(u || "") ? u : null;
@@ -2117,6 +2161,7 @@ function richHTML(html){
   d.querySelectorAll("a").forEach(a => { a.setAttribute("target", "_blank"); a.setAttribute("rel", "noopener noreferrer"); });
   return d.innerHTML;
 }
+function seenWord(c){ const n = (c && c.name || "").toLowerCase(); if(/livre|lecture|book|bd|manga/.test(n)) return "Lu"; if(/musi|podcast|album|son\b|playlist/.test(n)) return "Écouté"; return "Vu"; }
 function isMedia(it){
   if(it.url || it.posterUrl) return true;
   const c = catById(it.cat);
@@ -2301,7 +2346,7 @@ function cardHTML(it, idx, ctx){
   const l = it.list ? listById(it.list) : null;
   const rot = ((idx % 3) - 1) * 0.8;
   const mbtns = musicButtons(it), hasPlatforms = !!mbtns;
-  const li = it.url && !hasPlatforms ? linkInfo(it.url) : null;
+  const li = it.url && !hasPlatforms ? linkInfo(it.url, catById(it.cat)) : null;
   const isMot = !it.title && !li && !it.photoId && !it.posterUrl && !it.rich;
   const mine = (it.favBy||[]).includes(state.me);
   const favNames = (it.favBy||[]).filter(Boolean);
@@ -2312,7 +2357,8 @@ function cardHTML(it, idx, ctx){
     + '<span class="tape" aria-hidden="true"></span>'
     + (where ? '<div class="cat">'+esc(where)+'</div>' : '');
   const poster = safeImg(posterOf(it));
-  if(poster) h += '<img class="poster'+(it.posterUrl ? '' : ' wide')+'" src="'+esc(poster)+'" alt="'+esc(it.title || "Affiche")+'" loading="lazy" draggable="false" referrerpolicy="no-referrer">';
+  const vert = isVertical(it.url);
+  if(poster) h += '<img class="poster'+(vert ? ' vertical' : it.posterUrl ? '' : ' wide')+'" src="'+esc(poster)+'"'+(platformOfVideo(it.url) === "tiktok" ? ' data-tt="'+esc(it.url)+'"' : '')+' alt="'+esc(it.title || "Affiche")+'" loading="lazy" draggable="false" referrerpolicy="no-referrer">';
   if(it.photoId) h += photoTag(it.photoId, "photo", it.title || "Photo");
   if(it.title) h += '<h3>'+esc(it.title)+'</h3>';
   if(it.artist) h += '<p class="artist">'+esc(it.artist)+'</p>';
@@ -2324,7 +2370,7 @@ function cardHTML(it, idx, ctx){
   if(li) h += '<div class="links">' + li.links.map(x => '<a class="btn small'+(x.primary?' primary':'')+'" href="'+esc(x.href)+'" target="_blank" rel="noopener noreferrer" draggable="false">'+esc(x.label)+'</a>').join("") + (li.hint ? '<span class="hint">'+esc(li.hint)+'</span>' : '') + '</div>';
   if(isMedia(it)){
     const seen = it.seenBy || [];
-    h += '<div class="seen"><span>Vu :</span>' + people().map(p => {
+    h += '<div class="seen"><span>'+seenWord(c)+' :</span>' + people().map(p => {
       const on = seen.includes(p), mine = p === state.me;
       return '<label class="seenbox'+(on?' on':'')+(mine?'':' other')+'"><input type="checkbox" data-seen="'+esc(it.id)+'"'+(on?' checked':'')+(mine?'':' disabled')+'><span class="tick" aria-hidden="true"></span>'+esc(p)+'</label>';
     }).join("") + '</div>';
@@ -2388,7 +2434,7 @@ function itemForm(it, preset){
     +   '<div class="row"><select id="f-pkind" aria-label="Type">'+Object.entries(POSTER_KINDS).map(([k,v]) => '<option value="'+k+'">'+v.label+'</option>').join("")+'</select>'
     +   '<button type="button" class="btn small" id="f-psearch">Chercher avec le titre</button></div>'
     +   '<div id="f-pres" class="pres"></div><div id="f-pcur"></div>'
-    +   '<span class="help">Des affiches te sont proposées pendant que tu tapes le titre. Pour un lien YouTube, la miniature s\'affiche toute seule.</span></div>'
+    +   '<span class="help">Des affiches te sont proposées pendant que tu tapes le titre. « Titre (musique) » cherche le morceau, « Album entier » cherche l\'album. Pour un livre, tu peux taper le titre et l\'auteur. Pour un lien YouTube, un short ou un TikTok, la miniature s\'affiche toute seule.</span></div>'
     + '<div class="field"><label for="f-url">Lien</label><input type="url" id="f-url" value="'+esc(it.url||"")+'" placeholder="https://… (facultatif)"><span class="help">Musique : colle un lien Spotify ou Tidal, l\'autre pourra l\'ouvrir sur son appli à elle.</span></div>'
     + '<div class="field"><label for="f-why">Pourquoi</label><textarea id="f-why" maxlength="4000" placeholder="Ce que j\'en ai pensé, pourquoi j\'ai envie de te le partager… (facultatif)">'+esc(it.why||"")+'</textarea></div>'
     + '<div class="field"><label for="f-note">Pourquoi ça m\'a fait penser à toi</label><textarea id="f-note" maxlength="4000" placeholder="(facultatif)">'+esc(it.note||"")+'</textarea></div>'
@@ -2483,7 +2529,20 @@ function itemForm(it, preset){
     const urlHelp = document.createElement("span"); urlHelp.className = "help murl"; urlField.parentElement.appendChild(urlHelp);
     const fillFromLink = async () => {
       const u = urlField.value.trim();
-      if(sheet.classList.contains("mode-text") || !isMusicUrl(u) || u === musicFor) return;
+      if(sheet.classList.contains("mode-text") || u === musicFor) return;
+      if(platformOfVideo(u)){
+        musicFor = u; urlHelp.textContent = "Je récupère la vidéo…";
+        const v = await lookupVideo(u);
+        if(urlField.value.trim() !== u) return;
+        if(!v){ urlHelp.textContent = platformOfVideo(u) === "tiktok" ? "TikTok n'a pas répondu : la vidéo s'ouvrira quand même avec le lien. Ajoute un titre à la main." : "Je n'ai pas pu lire cette vidéo, mais le lien marchera."; musicFor = ""; return; }
+        const t = sheet.querySelector("#f-title"), a = sheet.querySelector("#f-artist");
+        if(v.title && !t.value.trim()) t.value = v.title.length > 120 ? v.title.slice(0, 117) + "…" : v.title;
+        if(v.author && !a.value.trim()) a.value = v.author;
+        if(!posterUrl && v.thumb && platformOfVideo(u) === "tiktok"){ posterUrl = v.thumb; drawPoster(); }
+        urlHelp.textContent = "Trouvé : " + (v.title || "la vidéo") + (v.author ? " — " + v.author : "") + (platformOfVideo(u) === "youtube" ? " · la miniature s'affiche toute seule." : "");
+        return;
+      }
+      if(!isMusicUrl(u)) return;
       musicFor = u; urlHelp.textContent = "Je récupère le titre et l'artiste…";
       try{
         const m = await lookupMusic(u);
@@ -2500,8 +2559,12 @@ function itemForm(it, preset){
     urlField.addEventListener("input", () => { clearTimeout(linkTimer); linkTimer = setTimeout(fillFromLink, 500); });
     urlField.addEventListener("change", fillFromLink);
     const pkind = sheet.querySelector("#f-pkind"), pres = sheet.querySelector("#f-pres"), pcur = sheet.querySelector("#f-pcur");
-    pkind.value = guessKind(catById(catSel.value));
-    catSel.addEventListener("change", () => { pkind.value = guessKind(catById(catSel.value)); });
+    const artistLbl = sheet.querySelector('label[for="f-artist"]');
+    const ARTIST_LBL = {music:"Artiste", album:"Artiste", song:"Artiste", ebook:"Auteur ou autrice", podcast:"Animé par", movie:"Réalisation (facultatif)", tv:"Créée par (facultatif)"};
+    const setKind = () => { const c = catById(catSel.value), n = (c && c.name || ""); pkind.value = guessKind(c); artistLbl.textContent = /youtube|tiktok|vid[ée]o|short/i.test(n) ? "Créateur ou créatrice" : (ARTIST_LBL[pkind.value] || "Artiste, réalisateur, auteur…"); };
+    setKind();
+    catSel.addEventListener("change", setKind);
+    pkind.addEventListener("change", () => { artistLbl.textContent = ARTIST_LBL[pkind.value] || artistLbl.textContent; });
     const drawPoster = () => { pcur.innerHTML = posterUrl ? '<div class="pcur"><img src="'+esc(posterUrl)+'" alt="Affiche choisie" referrerpolicy="no-referrer"><button type="button" class="btn ghost" id="f-prm">Retirer l\'affiche</button></div>' : ''; };
     drawPoster();
     pcur.addEventListener("click", e => { if(e.target.id === "f-prm"){ posterUrl = null; drawPoster(); } });
@@ -2510,7 +2573,7 @@ function itemForm(it, preset){
     titleIn.addEventListener("input", () => {
       clearTimeout(autoTimer);
       const term = titleIn.value.trim();
-      if(sheet.classList.contains("mode-text") || posterUrl || term.length < 3 || term === lastTerm) return;
+      if(sheet.classList.contains("mode-text") || /youtube|tiktok|vid[ée]o|short/i.test((catById(catSel.value) || {}).name || "") || posterUrl || term.length < 3 || term === lastTerm) return;
       autoTimer = setTimeout(() => { lastTerm = term; runSearch(true); }, 700);
     });
     pkind.addEventListener("change", () => { if(titleIn.value.trim().length >= 3) runSearch(true); });
