@@ -857,6 +857,12 @@ html[data-skin="coloc"] .crumb{position:relative;top:auto}
 .card img.poster.vertical{aspect-ratio:9/16;width:min(100%,220px);height:auto;max-height:none;object-fit:cover;object-position:center;justify-self:center;border-radius:14px}
 html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 .card img.poster.broken{display:none}
+/* Lecteur TikTok intégré */
+.sheet.ttsheet{max-width:420px}
+.ttplayer{aspect-ratio:9/16;max-height:72vh;width:100%;margin:0 auto;border-radius:18px;overflow:hidden;border:2px solid var(--ink);background:#000}
+.ttplayer iframe{width:100%;height:100%;border:0;display:block}
+.ttnote{text-align:center;margin-top:8px}
+.card img.poster[data-act="tt-play"]{cursor:pointer}
 
 </style>
 
@@ -881,7 +887,7 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 
 </script>
 <script>
-const APP_VERSION = "16/11 à 13h38";
+const APP_VERSION = "16/11 à 17h37";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -2087,13 +2093,22 @@ function ytId(u){
   return null;
 }
 function platformOfVideo(u){ try{ const h = new URL(String(u||"").trim()).hostname.replace(/^www\.|^m\./, ""); if(/(^|\.)tiktok\.com$/.test(h)) return "tiktok"; if(/(^|\.)youtube\.com$|^youtu\.be$/.test(h)) return "youtube"; }catch(e){} return ""; }
+function tiktokIdFromUrl(u){ const m = String(u || "").match(/tiktok\.com\/(?:@[^/]+\/(?:video|photo)|embed(?:\/v2)?|player\/v1|share\/video|v)\/(\d{8,})/); return m ? m[1] : ""; }
+async function playTikTok(it){
+  let id = it.ttId || tiktokIdFromUrl(it.url);
+  if(!id){ toast("Je cherche la vidéo…"); const v = await lookupVideo(it.url); id = v && v.id || ""; }
+  if(!id){ window.open(it.url, "_blank", "noopener"); return; }
+  openModal('<div class="ttplayer"><iframe src="https://www.tiktok.com/player/v1/'+esc(id)+'?autoplay=1&description=1&music_info=1&rel=0" title="Vidéo TikTok" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
+    + '<p class="help ttnote">Lecture sans compte, directement ici. <a href="'+esc(it.url)+'" target="_blank" rel="noopener noreferrer">Ouvrir sur TikTok</a></p>'
+    + '<div class="sheet-actions"><button type="button" class="btn" data-act="close">Fermer</button></div>', sheet => sheet.classList.add("ttsheet"));
+}
 function isVertical(u){ return platformOfVideo(u) === "tiktok" || /youtube\.com\/shorts\//.test(String(u || "")); }
 async function lookupVideo(url){
   const kind = platformOfVideo(url);
   const tries = kind === "tiktok" ? ["https://www.tiktok.com/oembed?url=" + encodeURIComponent(url), "https://noembed.com/embed?url=" + encodeURIComponent(url)]
     : ["https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent(url), "https://noembed.com/embed?url=" + encodeURIComponent(url)];
   for(const t of tries){
-    try{ const r = await fetchJSON(t); if(r && !r.error && (r.title || r.thumbnail_url)) return {title: (r.title || "").trim(), author: (r.author_name || "").replace(/ - Topic$/, ""), thumb: r.thumbnail_url || ""}; }catch(e){}
+    try{ const r = await fetchJSON(t); if(r && !r.error && (r.title || r.thumbnail_url)) return {title: (r.title || "").trim(), author: (r.author_name || "").replace(/ - Topic$/, ""), thumb: r.thumbnail_url || "", id: r.embed_product_id || ((r.html || "").match(/player\/v1\/(\d+)|data-video-id="(\d+)"/) || []).slice(1).find(Boolean) || ""}; }catch(e){}
   }
   return null;
 }
@@ -2358,7 +2373,7 @@ function cardHTML(it, idx, ctx){
     + (where ? '<div class="cat">'+esc(where)+'</div>' : '');
   const poster = safeImg(posterOf(it));
   const vert = isVertical(it.url);
-  if(poster) h += '<img class="poster'+(vert ? ' vertical' : it.posterUrl ? '' : ' wide')+'" src="'+esc(poster)+'"'+(platformOfVideo(it.url) === "tiktok" ? ' data-tt="'+esc(it.url)+'"' : '')+' alt="'+esc(it.title || "Affiche")+'" loading="lazy" draggable="false" referrerpolicy="no-referrer">';
+  if(poster) h += '<img class="poster'+(vert ? ' vertical' : it.posterUrl ? '' : ' wide')+'" src="'+esc(poster)+'"'+(platformOfVideo(it.url) === "tiktok" ? ' data-tt="'+esc(it.url)+'" data-act="tt-play" data-id="'+esc(it.id)+'" role="button" tabindex="0"' : '')+' alt="'+esc(it.title || "Affiche")+'" loading="lazy" draggable="false" referrerpolicy="no-referrer">';
   if(it.photoId) h += photoTag(it.photoId, "photo", it.title || "Photo");
   if(it.title) h += '<h3>'+esc(it.title)+'</h3>';
   if(it.artist) h += '<p class="artist">'+esc(it.artist)+'</p>';
@@ -2367,7 +2382,8 @@ function cardHTML(it, idx, ctx){
   const both = it.why && it.note;
   if(it.why) h += '<div class="notebox why">'+(both || !it.title ? '<span class="nlabel">Pourquoi</span>' : '')+'<p class="note">'+esc(it.why)+'</p></div>';
   if(it.note) h += '<div class="notebox">'+(both ? '<span class="nlabel">Ça m\'a fait penser à toi</span>' : '')+'<p class="note">'+esc(it.note)+'</p></div>';
-  if(li) h += '<div class="links">' + li.links.map(x => '<a class="btn small'+(x.primary?' primary':'')+'" href="'+esc(x.href)+'" target="_blank" rel="noopener noreferrer" draggable="false">'+esc(x.label)+'</a>').join("") + (li.hint ? '<span class="hint">'+esc(li.hint)+'</span>' : '') + '</div>';
+  if(li && platformOfVideo(it.url) === "tiktok") li.links = [{label:"▶ Regarder ici", act:"tt-play", primary:true}, {label:"Ouvrir sur TikTok", href:it.url}], li.hint = "";
+  if(li) h += '<div class="links">' + li.links.map(x => x.act ? '<button type="button" class="btn small primary" data-act="'+x.act+'" data-id="'+esc(it.id)+'">'+esc(x.label)+'</button>' : '<a class="btn small'+(x.primary?' primary':'')+'" href="'+esc(x.href)+'" target="_blank" rel="noopener noreferrer" draggable="false">'+esc(x.label)+'</a>').join("") + (li.hint ? '<span class="hint">'+esc(li.hint)+'</span>' : '') + '</div>';
   if(isMedia(it)){
     const seen = it.seenBy || [];
     h += '<div class="seen"><span>'+seenWord(c)+' :</span>' + people().map(p => {
@@ -2527,10 +2543,12 @@ function itemForm(it, preset){
     let musicLinks = null, musicFor = "";
     const urlField = sheet.querySelector("#f-url");
     const urlHelp = document.createElement("span"); urlHelp.className = "help murl"; urlField.parentElement.appendChild(urlHelp);
+    let ttIdFound = it.ttId || "";
     const fillFromLink = async () => {
       const u = urlField.value.trim();
       if(sheet.classList.contains("mode-text") || u === musicFor) return;
       if(platformOfVideo(u)){
+        ttIdFound = "";
         musicFor = u; urlHelp.textContent = "Je récupère la vidéo…";
         const v = await lookupVideo(u);
         if(urlField.value.trim() !== u) return;
@@ -2538,6 +2556,7 @@ function itemForm(it, preset){
         const t = sheet.querySelector("#f-title"), a = sheet.querySelector("#f-artist");
         if(v.title && !t.value.trim()) t.value = v.title.length > 120 ? v.title.slice(0, 117) + "…" : v.title;
         if(v.author && !a.value.trim()) a.value = v.author;
+        if(v.id) ttIdFound = v.id;
         if(!posterUrl && v.thumb && platformOfVideo(u) === "tiktok"){ posterUrl = v.thumb; drawPoster(); }
         urlHelp.textContent = "Trouvé : " + (v.title || "la vidéo") + (v.author ? " — " + v.author : "") + (platformOfVideo(u) === "youtube" ? " · la miniature s'affiche toute seule." : "");
         return;
@@ -2602,7 +2621,7 @@ function itemForm(it, preset){
         url: sheet.querySelector("#f-url").value.trim(),
         note: sheet.querySelector("#f-note").value.trim(),
         why: sheet.querySelector("#f-why").value.trim(),
-        moods: [...sel], photoId: getPhoto() || null, inDaily: sheet.querySelector("#f-indaily").checked, posterUrl: posterUrl || null, updatedAt: Date.now()
+        moods: [...sel], photoId: getPhoto() || null, inDaily: sheet.querySelector("#f-indaily").checked, ttId: platformOfVideo(sheet.querySelector("#f-url").value) === "tiktok" ? (tiktokIdFromUrl(sheet.querySelector("#f-url").value) || ttIdFound || null) : null, posterUrl: posterUrl || null, updatedAt: Date.now()
       };
       const richClean = sanitizeRich(ed.innerHTML);
       data.rich = (richText(richClean) || /<img/.test(richClean)) ? richClean : null;
@@ -3069,6 +3088,7 @@ document.addEventListener("click", e => {
   if(act === "edit-list"){ const l = listById(el.dataset.id); if(l) listForm(l); return; }
   if(act === "settings"){ settingsForm(); return; }
   if(act === "reglages"){ reglagesForm(); return; }
+  if(act === "tt-play"){ const it = state.items.find(i => i.id === el.dataset.id); if(it) playTikTok(it); return; }
   if(act === "change-pw"){ passwordForm(); return; }
   if(act === "rich-more"){ const card = el.closest(".card"); if(card){ const open = card.classList.toggle("rich-open"); el.textContent = open ? "Replier" : "Lire tout"; } return; }
   if(act === "intro-toggle"){ state.introOpen = !state.introOpen; if(state.introOpen) markIntroRead(); render(); return; }
