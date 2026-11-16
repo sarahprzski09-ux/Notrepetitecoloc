@@ -1022,8 +1022,8 @@ function applyAppearance(s){
   const b = FONTS.body[s.fontBody] || FONTS.body.fraunces;
   const h = FONTS.hand[s.fontHand] || FONTS.hand.swily;
   const root = document.documentElement.style;
-  root.setProperty("--display", d.css + ',"Arial Rounded MT Bold",system-ui,sans-serif');
-  root.setProperty("--body", b.css + ',system-ui,-apple-system,"Segoe UI",sans-serif');
+  root.setProperty("--display", d.css + ',"Fraunces","Arial Rounded MT Bold",system-ui,sans-serif');
+  root.setProperty("--body", b.css + ',"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif');
   root.setProperty("--hand", (h.css || b.css) + ',"Nahla Script","Yellowtail",' + b.css + ',cursive');
   const scale = Math.max(.8, Math.min(1.4, +s.fontScale || 1));
   document.documentElement.style.fontSize = (16 * scale) + "px";
@@ -1032,7 +1032,7 @@ function applyAppearance(s){
   root.setProperty("--muted", mixHex(col.ink, col.bg, .38)); root.setProperty("--line", mixHex(col.ink, col.bg, .84));
   root.setProperty("--paper", col.bg);
   document.documentElement.dataset.skin = "coloc";
-  const fams = [...new Set([d.g, b.g, h.g, "Yellowtail"].filter(Boolean))];
+  const fams = [...new Set([d.g, b.g, h.g, "Yellowtail", FONTS.display.fraunces.g, FONTS.display.jakarta.g].filter(Boolean))];
   root.setProperty("--grid", mixHex(col.deep, col.bg, .88));
   root.setProperty("--t1", mixHex(col.deep, col.bg, .84)); root.setProperty("--t2", mixHex(col.accent, col.bg, .55));
   root.setProperty("--t3", mixHex("#e8c36a", col.bg, .62)); root.setProperty("--t4", mixHex(col.deep, col.bg, .7));
