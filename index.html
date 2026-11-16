@@ -875,7 +875,6 @@ const FACES = [
    Pour en ajouter un : une entrée de plus, avec son dessin (svg), sa place (style) et sa bulle (title). */
 const DOODLES = [
   {name:"etoiles", svg: STARS_SVG, title:"Des étoiles toutes jaunes", style:"top:-6px;right:4%;width:58px;transform:rotate(8deg)"},
-  {name:"dragon", svg: DRAGON_SVG, title:"Un petit dragon qui imagine des choses", style:"top:22px;right:calc(4% + 76px);width:54px;transform:rotate(-6deg)"}
 ];
 
 
@@ -1573,7 +1572,6 @@ function renderHomeColoc(){
     + (daily ? dailyBubble(daily) : '')
     + (lastPoster ? polaroid(lastPoster.posterUrl ? '<img src="'+esc(safeImg(lastPoster.posterUrl) || "")+'" alt="" referrerpolicy="no-referrer">' : photoTag(lastPoster.photoId, "", ""), (lastPoster.title || "").toLowerCase().slice(0, 28), "small", 'data-act="show-item" data-id="'+esc(lastPoster.id)+'" role="button" tabindex="0"') : '')
     + (gifts.length ? '<a href="#cadeaux" data-act="open-gifts" class="stk-link">'+STICKER(plural(gifts.length, "cadeau", "cadeaux")+'<br>à ouvrir', "s1")+'</a>' : STICKER("coucou ♡", "s1"))
-    + '<button class="capy" data-act="capy" aria-label="Quelque chose se cache ici">'+CAPY_SVG+'</button>'
     + '</div>';
   $("#head").innerHTML = nav + '<header class="chero">'
     + '<div class="doodles">'+DOODLES.map(d => '<span class="doodle doodle-'+esc(d.name)+'" style="'+d.style+'" title="'+esc(d.title||"")+'">'+d.svg+'</span>').join("")+'</div>'
@@ -1721,14 +1719,51 @@ function jsonp(url){
     document.head.appendChild(s);
   });
 }
-async function searchPosters(term, kind){
+const yr = d => (d || "").slice(0, 4);
+async function fetchJSON(url, opts){ const r = await fetch(url, opts); if(!r.ok) throw new Error(r.status); return r.json(); }
+function tmdbKey(){ return (state.settings && state.settings.tmdbKey || "").trim(); }
+async function fromTMDB(term, type){
+  const key = tmdbKey(); if(!key) return [];
+  const bearer = key.startsWith("eyJ");
+  const url = "https://api.themoviedb.org/3/search/" + type + "?query=" + encodeURIComponent(term) + "&language=fr-FR&include_adult=false" + (bearer ? "" : "&api_key=" + encodeURIComponent(key));
+  const j = await fetchJSON(url, bearer ? {headers:{Authorization:"Bearer " + key}} : undefined);
+  return (j.results || []).filter(r => r.poster_path).slice(0, 12).map(r => ({url:"https://image.tmdb.org/t/p/w500" + r.poster_path, title:r.title || r.name || "", sub:[yr(r.release_date || r.first_air_date), "TMDB"].filter(Boolean).join(" · ")}));
+}
+async function fromTVmaze(term){
+  const j = await fetchJSON("https://api.tvmaze.com/search/shows?q=" + encodeURIComponent(term));
+  return (j || []).map(x => x.show).filter(s => s && s.image).slice(0, 10).map(s => ({url:(s.image.original || s.image.medium).replace(/^http:/, "https:"), title:s.name, sub:[yr(s.premiered), "TVmaze"].filter(Boolean).join(" · ")}));
+}
+async function fromDeezer(term, what){
+  const j = await jsonp("https://api.deezer.com/search/" + what + "?q=" + encodeURIComponent(term) + "&limit=12&output=jsonp");
+  return (j && j.data || []).map(r => what === "track" ? {url:r.album && (r.album.cover_xl || r.album.cover_big), title:r.title, sub:[r.artist && r.artist.name, "Deezer"].filter(Boolean).join(" · ")}
+    : {url:r.cover_xl || r.cover_big, title:r.title, sub:[r.artist && r.artist.name, "Deezer"].filter(Boolean).join(" · ")}).filter(r => r.url);
+}
+async function fromOpenLibrary(term){
+  const j = await fetchJSON("https://openlibrary.org/search.json?q=" + encodeURIComponent(term) + "&limit=12&fields=title,author_name,first_publish_year,cover_i");
+  return (j.docs || []).filter(d => d.cover_i).map(d => ({url:"https://covers.openlibrary.org/b/id/" + d.cover_i + "-L.jpg", title:d.title, sub:[(d.author_name || [])[0], d.first_publish_year].filter(Boolean).join(" · ")}));
+}
+async function fromITunes(term, kind){
   const k = POSTER_KINDS[kind] || POSTER_KINDS.movie;
-  const data = await jsonp("https://itunes.apple.com/search?term=" + encodeURIComponent(term) + "&" + k.q + "&country=FR&lang=fr_fr&limit=12");
+  const data = await jsonp("https://itunes.apple.com/search?term=" + encodeURIComponent(term) + "&" + k.q + "&country=FR&limit=12");
   return (data && data.results || []).filter(r => r.artworkUrl100).map(r => ({
     url: r.artworkUrl100.replace(/\/\d+x\d+(bb|cc)?\.(jpg|png|webp)$/i, "/600x600bb.jpg"),
-    title: r.trackName || r.collectionName || "",
-    sub: [r.artistName, (r.releaseDate || "").slice(0,4)].filter(Boolean).join(" · ")
+    title: r.trackName || r.collectionName || "", sub: [r.artistName, yr(r.releaseDate), "Apple"].filter(Boolean).join(" · ")
   }));
+}
+async function searchPosters(term, kind){
+  const jobs = {
+    movie:   [() => fromTMDB(term, "movie"), () => fromITunes(term, "movie")],
+    tv:      [() => fromTMDB(term, "tv"), () => fromTVmaze(term), () => fromITunes(term, "tv")],
+    album:   [() => fromDeezer(term, "album"), () => fromITunes(term, "album")],
+    song:    [() => fromDeezer(term, "track"), () => fromITunes(term, "song")],
+    ebook:   [() => fromOpenLibrary(term), () => fromITunes(term, "ebook")],
+    podcast: [() => fromITunes(term, "podcast")]
+  }[kind] || [() => fromTMDB(term, "movie"), () => fromITunes(term, "movie")];
+  const settled = await Promise.allSettled(jobs.map(j => j()));
+  const seen = new Set(), out = [];
+  settled.forEach(s => { if(s.status === "fulfilled") s.value.forEach(r => { if(r.url && !seen.has(r.url)){ seen.add(r.url); out.push(r); } }); });
+  if(!out.length && settled.every(s => s.status === "rejected")) throw new Error("aucune source");
+  return out.slice(0, 18);
 }
 function ytId(u){
   try{
@@ -1775,7 +1810,6 @@ function dailyHTML(){
     h += '<div class="dempty"><p>Pas encore de photo ici.</p><p>Ajoute une photo dans n\'importe quel domaine : chaque jour, l\'une d\'elles s\'installera dans ce cadre.</p></div>';
   }
   h += '<button class="btn small" data-act="add-photo">'+PAW+' Ajouter une photo</button>'
-    + '<button class="capy" data-act="capy" aria-label="Quelque chose se cache ici">'+CAPY_SVG+'</button>'
     + '</div></aside>';
   return h;
 }
@@ -2203,6 +2237,8 @@ function reglagesForm(){
     + '<div class="field" style="flex:1 1 170px"><span class="lbl">Police du texte</span>'+fontPicker("body", "fontBody", look.fontBody)+'</div>'
     + '<div class="field" style="flex:1 1 170px"><span class="lbl">Police des petits mots</span>'+fontPicker("hand", "fontHand", look.fontHand)+'</div></div>'
     + '<div class="font-sample"><strong>Titre d\'exemple</strong><span>Un texte pour voir comment ça rend.</span><em>Et un petit mot écrit à la main ♡</em></div>'
+    + '<h3 class="subhead">Recherche d\'affiches</h3>'
+    + '<div class="field"><label for="r-tmdb">Clé TMDB (affiches de films et séries en français)</label><input type="text" id="r-tmdb" autocomplete="off" spellcheck="false" value="'+esc(state.settings.tmdbKey || "")+'" placeholder="Facultatif : colle ta clé API ici"><span class="help">Sans clé, les séries, la musique et les livres marchent quand même. Les films passent alors par Apple, qui en trouve moins.</span></div>'
     + '<h3 class="subhead">Couleurs de l\'appli</h3>'
     + '<div class="colorgrid" id="r-colors"></div>'
     + '<div class="field"><span class="lbl">Thèmes prêts</span><div class="themes" id="r-presets"></div></div>'
@@ -2261,7 +2297,7 @@ function reglagesForm(){
     overlay.addEventListener("click", e => { if(e.target === overlay) revert(); }, true);
     sheet.querySelector("#regForm").addEventListener("submit", e => {
       e.preventDefault(); state.previewLook = false;
-      W.setSettings({...look}).catch(() => {});
+      W.setSettings({...look, tmdbKey: sheet.querySelector("#r-tmdb").value.trim()}).catch(() => {});
       closeModal();
     });
   });
