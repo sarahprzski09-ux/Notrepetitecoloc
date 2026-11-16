@@ -907,7 +907,7 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 
 </script>
 <script>
-const APP_VERSION = "16/11 à 18h07";
+const APP_VERSION = "16/11 à 18h09";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1317,12 +1317,15 @@ function syncFromData(){
 /* ---------- Petites notifications : ce que l'autre a regardé ou répondu ---------- */
 function notifications(){
   const me = state.me, ev = [];
+  const norm = x => String(x || "").trim().toLowerCase();
+  const others = new Set(people().filter(p => norm(p) !== norm(me)).map(norm));
+  const isOther = who => others.has(norm(who));
   state.items.forEach(it => {
     const label = it.title || (it.rich ? richText(it.rich).slice(0, 40) : "") || (it.note || "").slice(0, 40) || "un partage";
-    Object.entries(it.seenAt || {}).forEach(([who, at]) => { if(who !== me && it.author !== who && (it.seenBy || []).includes(who)) ev.push({type:"seen", who, at, label, id: it.id, word: seenWord(catById(it.cat)).toLowerCase()}); });
-    (it.replies || []).forEach(r => { if(r.by && r.by !== me && r.at) ev.push({type:"reply", who: r.by, at: r.at, label, id: it.id, text: r.text}); });
+    Object.entries(it.seenAt || {}).forEach(([who, at]) => { if(isOther(who) && norm(it.author) !== norm(who) && (it.seenBy || []).includes(who)) ev.push({type:"seen", who, at, label, id: it.id, word: seenWord(catById(it.cat)).toLowerCase()}); });
+    (it.replies || []).forEach(r => { if(isOther(r.by) && r.at) ev.push({type:"reply", who: r.by, at: r.at, label, id: it.id, text: r.text}); });
   });
-  state.lists.forEach(l => (l.replies || []).forEach(r => { if(r.by && r.by !== me && r.at) ev.push({type:"reply", who: r.by, at: r.at, label: l.name || "une liste", list: l.id, cat: l.cat, text: r.text}); }));
+  state.lists.forEach(l => (l.replies || []).forEach(r => { if(isOther(r.by) && r.at) ev.push({type:"reply", who: r.by, at: r.at, label: l.name || "une liste", list: l.id, cat: l.cat, text: r.text}); }));
   return ev.sort((a,b) => b.at - a.at);
 }
 function notifLine(n){
