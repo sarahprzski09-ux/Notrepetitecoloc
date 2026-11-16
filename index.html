@@ -636,6 +636,37 @@ a.num:hover{outline:2px solid var(--deep)}
 .sticker.s2{font-size:.72rem}
 @media (max-width:520px){.sticker.s1{font-size:.8rem}}
 
+/* ===== Écrans d'ouverture ===== */
+.gatewrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,420px);gap:40px;align-items:center;min-height:calc(100vh - 80px);padding:20px 0}
+.gtitle{position:relative}
+.gtitle .ctitle{font-size:clamp(3.6rem,10vw,8rem)}
+.gtitle .cscript{left:min(52%,300px);top:clamp(8rem,19vw,15.5rem)}
+html[data-skin="coloc"] .gate{position:relative;margin:70px 0 0;max-width:none;background:#fff;border:none;border-radius:4px;padding:34px 28px 30px;box-shadow:0 18px 44px rgba(30,40,25,.18);transform:rotate(2deg)}
+html[data-skin="coloc"] .gate > *{transform:rotate(-2deg)}
+html[data-skin="coloc"] .gate > .ptape{transform:translateX(-50%) rotate(-6deg)}
+html[data-skin="coloc"] .gate .perch{top:-84px;left:auto;right:28px;transform:none;width:112px}
+.gh{font-family:var(--display);font-weight:400;color:var(--deep);text-transform:uppercase;font-size:2.2rem;line-height:1;margin:0 0 6px}
+html[data-skin="coloc"] .gate h1{font-family:var(--display);font-weight:400;color:var(--deep);text-transform:uppercase;font-size:2rem}
+html[data-skin="coloc"] .gate .sub{font-family:var(--body);font-size:1rem;color:var(--muted);margin:0 0 16px}
+html[data-skin="coloc"] .gate input[type=text],html[data-skin="coloc"] .gate input[type=password]{border:2px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--card)}
+html[data-skin="coloc"] .gate input:focus{border-color:var(--deep);outline:none}
+html[data-skin="coloc"] .gate .btn.primary{width:100%;justify-content:center;margin-top:4px}
+html[data-skin="coloc"] .gate .row .btn.primary{width:auto}
+.loader{display:flex;gap:14px;justify-content:center;padding:18px 0 6px;color:var(--deep)}
+.loader .paw{width:30px;height:30px;animation:pas 1.2s ease-in-out infinite}
+.loader .paw:nth-child(2){animation-delay:.2s;color:var(--accent)}
+.loader .paw:nth-child(3){animation-delay:.4s}
+@keyframes pas{0%,100%{transform:translateY(0) rotate(-10deg);opacity:.35}40%{transform:translateY(-10px) rotate(8deg);opacity:1}}
+@media (prefers-reduced-motion:reduce){.loader .paw{animation:none;opacity:1}}
+@media (max-width:760px){
+  .gatewrap{grid-template-columns:1fr;gap:10px;min-height:0}
+  .gtitle .ctitle{font-size:clamp(3rem,15vw,4.6rem)}
+  .gtitle .cscript{font-size:2.6rem;left:auto;right:4%;top:clamp(5.5rem,26vw,8rem)}
+  html[data-skin="coloc"] .gate{margin-top:90px;transform:rotate(1deg)}
+  html[data-skin="coloc"] .gate > *{transform:rotate(-1deg)}
+}
+input[type=checkbox]{accent-color:var(--deep)}
+
 </style>
 
 </head>
@@ -1172,12 +1203,14 @@ function hydratePhotos(){
 function gate(html){
   applyPageTheme(null);
   $("#head").innerHTML = ""; $("#movebar").innerHTML = ""; $("#status").innerHTML = "";
-  $("#main").innerHTML = '<div class="gate"><div class="perch">'+CAT_SVG("cat")+'</div>'+html+'</div>';
+  const title = ((state.config && state.config.title) || state.settings.title || DEFAULT_SETTINGS.title).trim();
+  $("#main").innerHTML = '<div class="gatewrap"><div class="gtitle" aria-hidden="true"><div class="ctitle">'+title.split(/\s+/).map(w => '<span>'+esc(w)+'</span>').join("")+'</div><span class="cscript">'+esc(state.settings.script || "à deux")+'</span></div>'
+    + '<div class="gate"><span class="ptape" aria-hidden="true"></span><div class="perch">'+CAT_SVG("cat")+'</div>'+html+'</div></div>';
   const first = $("#main input"); if(first) first.focus();
 }
 function renderGate(){
   const p = state.phase;
-  if(p === "boot") return gate('<h1>Notre petit coin</h1><p class="sub">Ouverture…</p>');
+  if(p === "boot") return gate('<h2 class="gh">On ouvre la coloc…</h2><div class="loader" role="status" aria-label="Chargement">'+PAW+PAW+PAW+'</div>');
   if(p === "norepo") return gate(
     '<h1>Où est le coin ?</h1><p>Je n\'arrive pas à deviner ton dépôt GitHub depuis cette adresse.</p>'
     + '<form id="repoForm"><div class="field"><label for="g-owner">Ton pseudo GitHub</label><input type="text" id="g-owner" required></div>'
@@ -1193,12 +1226,12 @@ function renderGate(){
     + '<div class="field" style="flex:1 1 160px"><label for="g-her">Son prénom</label><input type="text" id="g-her" maxlength="30" required></div></div>'
     + '<button class="btn primary" type="submit" id="g-go">Installer le coin</button><p class="help" id="g-msg"></p></form>');
   if(p === "login") return gate(
-    '<h1>'+esc(state.config.title || DEFAULT_SETTINGS.title)+'</h1><p class="sub">Entre le mot de passe.</p>'
+    '<h2 class="gh">Toc toc ♡</h2><p class="sub">Entre le mot de passe de la coloc.</p>'
     + '<form id="loginForm"><div class="field"><label for="g-pw">Mot de passe</label><input type="password" id="g-pw" autocomplete="current-password" required></div>'
     + '<label class="check"><input type="checkbox" id="g-remember" checked> Rester connectée sur cet appareil</label>'
     + '<button class="btn primary" type="submit" id="g-go">Entrer</button><p class="help" id="g-msg"></p></form>');
   if(p === "who") return gate(
-    '<h1>Qui es-tu ?</h1><p class="sub">Pour signer tes ajouts et tes cœurs.</p><div class="row">'
+    '<h2 class="gh">Qui es-tu ?</h2><p class="sub">Pour signer tes ajouts et tes cœurs.</p><div class="row">'
     + people().map(n => '<button class="btn primary" data-act="iam" data-n="'+esc(n)+'">'+esc(n)+'</button>').join("") + '</div>');
   if(p === "renew") return gate(
     '<h1>La clé a expiré</h1><p>GitHub n\'accepte plus la clé d\'accès. Crée-en une nouvelle (mêmes réglages qu\'à l\'installation) et colle-la ici.</p>'
@@ -1403,6 +1436,7 @@ function topbar(){
 
 function render(){
   if(state.phase !== "app") return;
+  try{ const s = state.settings, look = JSON.stringify({title: s.title, script: s.script, skin: s.skin, colors: s.colors, fontDisplay: s.fontDisplay, fontBody: s.fontBody, fontHand: s.fontHand, fontScale: s.fontScale}); if(LS.get("coin.look") !== look) LS.set("coin.look", look); }catch(e){}
   if(!state.previewLook) applyAppearance(state.settings);
   document.title = state.settings.title || DEFAULT_SETTINGS.title;
   $("#status").innerHTML = "";
@@ -2267,7 +2301,8 @@ document.addEventListener("drop", e => {
   }
 });
 
-applyAppearance(DEFAULT_LOOK);
+try{ const cached = JSON.parse(LS.get("coin.look") || "null"); if(cached) Object.keys(cached).forEach(k => { if(cached[k] != null) state.settings[k] = cached[k]; }); }catch(e){}
+applyAppearance(state.settings);
 try{ const l = document.createElement("link"); l.rel = "icon"; l.href = "data:image/svg+xml," + encodeURIComponent(CAT_SVG("").replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ')); document.head.appendChild(l); }catch(e){}
 if(!window.crypto || !crypto.subtle){ state.phase = "error"; state.errorMsg = "Ce navigateur est trop ancien pour ouvrir le coin. Essaie avec Chrome, Firefox ou Safari à jour."; renderGate(); }
 else boot();
