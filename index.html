@@ -713,6 +713,7 @@ input[type=checkbox]{accent-color:var(--deep)}
 .fp-opt[aria-selected="true"]{background:var(--t2)}
 .fp-opt b{font-weight:400;font-size:1.3rem;line-height:1.15}
 .fp-opt small{font-size:1rem;color:var(--muted);line-height:1.2}
+.pnote{grid-column:1/-1;color:var(--deep);font-weight:600}
 
 </style>
 
@@ -1726,7 +1727,9 @@ async function fromTMDB(term, type){
   const key = tmdbKey(); if(!key) return [];
   const bearer = key.startsWith("eyJ");
   const url = "https://api.themoviedb.org/3/search/" + type + "?query=" + encodeURIComponent(term) + "&language=fr-FR&include_adult=false" + (bearer ? "" : "&api_key=" + encodeURIComponent(key));
-  const j = await fetchJSON(url, bearer ? {headers:{Authorization:"Bearer " + key}} : undefined);
+  let j;
+  try{ j = await fetchJSON(url, bearer ? {headers:{Authorization:"Bearer " + key}} : undefined); }
+  catch(e){ searchNotes.push(String(e.message) === "401" ? "TMDB refuse la clé : vérifie-la dans Réglages." : "TMDB ne répond pas (" + e.message + ")."); throw e; }
   return (j.results || []).filter(r => r.poster_path).slice(0, 12).map(r => ({url:"https://image.tmdb.org/t/p/w500" + r.poster_path, title:r.title || r.name || "", sub:[yr(r.release_date || r.first_air_date), "TMDB"].filter(Boolean).join(" · ")}));
 }
 async function fromTVmaze(term){
@@ -1750,7 +1753,10 @@ async function fromITunes(term, kind){
     title: r.trackName || r.collectionName || "", sub: [r.artistName, yr(r.releaseDate), "Apple"].filter(Boolean).join(" · ")
   }));
 }
+let searchNotes = [];
 async function searchPosters(term, kind){
+  searchNotes = [];
+  if((kind === "movie" || kind === "tv") && !tmdbKey()) searchNotes.push("Aucune clé TMDB enregistrée : ajoute-la dans Réglages pour de meilleures affiches de films.");
   const jobs = {
     movie:   [() => fromTMDB(term, "movie"), () => fromITunes(term, "movie")],
     tv:      [() => fromTMDB(term, "tv"), () => fromTVmaze(term), () => fromITunes(term, "tv")],
@@ -2075,10 +2081,11 @@ function itemForm(it, preset){
       pres.innerHTML = '<p class="help">'+(auto ? 'Je cherche des affiches…' : 'Recherche…')+'</p>';
       try{
         const res = await searchPosters(term, pkind.value);
-        pres.innerHTML = res.length ? res.map((r, i) => '<button type="button" class="pres-item" data-i="'+i+'"><img src="'+esc(r.url)+'" alt="" loading="lazy" referrerpolicy="no-referrer"><span>'+esc(r.title)+'</span><small>'+esc(r.sub)+'</small></button>').join("")
-          : '<p class="help">Rien trouvé. Essaie un autre type ou une autre orthographe.</p>';
+        const notes = searchNotes.length ? '<p class="help pnote">'+searchNotes.map(esc).join("<br>")+'</p>' : '';
+        pres.innerHTML = notes + (res.length ? res.map((r, i) => '<button type="button" class="pres-item" data-i="'+i+'"><img src="'+esc(r.url)+'" alt="" loading="lazy" referrerpolicy="no-referrer"><span>'+esc(r.title)+'</span><small>'+esc(r.sub)+'</small></button>').join("")
+          : '<p class="help">Rien trouvé. Essaie un autre type ou une autre orthographe.</p>');
         pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; pres.innerHTML = ""; drawPoster(); };
-      }catch(err){ pres.innerHTML = '<p class="help">La recherche ne répond pas. Vérifie ta connexion et réessaie.</p>'; }
+      }catch(err){ pres.innerHTML = '<p class="help">La recherche ne répond pas. '+(searchNotes.length ? searchNotes.map(esc).join(" ") : 'Vérifie ta connexion et réessaie.')+'</p>'; }
     };
     sheet.querySelector("#f-psearch").addEventListener("click", () => runSearch(false));
     if(preset && preset.pickPhoto){ const fi = sheet.querySelector("#f-photo"); if(fi) try{ fi.click(); }catch(e){} }
