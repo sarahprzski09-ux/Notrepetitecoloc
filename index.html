@@ -667,6 +667,27 @@ html[data-skin="coloc"] .gate .row .btn.primary{width:auto}
 }
 input[type=checkbox]{accent-color:var(--deep)}
 
+/* bulle de la photo du jour */
+.cstack:has(.dbubble){min-height:600px}
+.dbubble{position:absolute;right:0;top:400px;width:min(330px,64%);background:var(--card);border-radius:22px;padding:14px 16px 12px;box-shadow:0 10px 28px rgba(30,40,25,.14);display:grid;gap:6px;z-index:4}
+.dbubble::before{content:"";position:absolute;top:-12px;right:46%;width:24px;height:24px;background:var(--card);transform:rotate(45deg);border-radius:4px}
+.dbubble strong{font-family:var(--display);font-weight:400;text-transform:uppercase;color:var(--deep);font-size:1.05rem;line-height:1.1;position:relative}
+.dtext{margin:0;font-family:var(--hand);font-size:1.15rem;line-height:1.3;color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;position:relative}
+.dby{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dreps{display:grid;gap:4px;border-top:1.5px dashed var(--line);padding-top:6px}
+.dreps p{margin:0;font-size:.85rem;line-height:1.35;overflow-wrap:anywhere}
+.dreps b{color:var(--deep)}
+.dmore{font:inherit;font-size:.75rem;font-weight:700;background:none;border:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;justify-self:start}
+.dform{display:flex;gap:6px;margin-top:2px}
+.dform input{flex:1 1 auto;min-width:0;border:1.5px solid var(--line);border-radius:999px;padding:7px 12px;font-size:.85rem;background:var(--bg)}
+.dform .btn{padding:6px 12px}
+@media (max-width:860px){.dbubble{top:390px}}
+@media (max-width:520px){
+  .cstack:has(.dbubble){min-height:0}
+  .dbubble{position:relative;top:auto;right:auto;width:100%;margin-top:330px}
+  .dbubble::before{right:30%}
+}
+
 </style>
 
 </head>
@@ -1488,6 +1509,18 @@ function weekHTML(){
 }
 function polaroid(content, caption, cls, attrs){ return '<figure class="pol '+(cls||"")+'" '+(attrs||"")+'><span class="ptape" aria-hidden="true"></span>'+content+'<figcaption>'+esc(caption)+'</figcaption></figure>'; }
 const STICKER = (txt, cls) => '<span class="sticker '+(cls||"")+'">'+txt+'</span>';
+function dailyBubble(it){
+  const text = it.note || it.why || "";
+  const reps = Array.isArray(it.replies) ? it.replies : [];
+  const shown = reps.slice(-2);
+  return '<div class="dbubble">'
+    + (it.title ? '<strong>'+esc(it.title)+'</strong>' : '')
+    + (text ? '<p class="dtext">'+esc(text)+'</p>' : '')
+    + (it.author ? '<span class="dby">'+esc(it.author)+'</span>' : '')
+    + (shown.length ? '<div class="dreps">'+(reps.length > shown.length ? '<button class="dmore" data-act="show-item" data-id="'+esc(it.id)+'">Voir les '+reps.length+' réponses</button>' : '')+shown.map(r => '<p><b>'+esc(r.by || "Quelqu'un")+'</b> '+esc(r.text)+'</p>').join("")+'</div>' : '')
+    + '<form class="replyform dform" data-reply="item:'+esc(it.id)+'"><input type="text" maxlength="500" placeholder="'+(text || shown.length ? 'Répondre…' : 'Un petit mot sur cette photo ?')+'" aria-label="Répondre à la photo du jour" id="reply-daily"><button class="btn small primary" type="submit" aria-label="Envoyer">↵</button></form>'
+    + '</div>';
+}
 function renderHomeColoc(){
   applyPageTheme(null);
   document.body.setAttribute("style", "");
@@ -1509,6 +1542,7 @@ function renderHomeColoc(){
     + '<div class="perch">'+CAT_SVG("cat")+'</div>'
     + (daily ? polaroid(photoTag(daily.photoId, "", daily.title || "Photo du jour"), "photo du jour ♡", "big", 'data-act="show-item" data-id="'+esc(daily.id)+'" role="button" tabindex="0"')
              : '<button class="pol big empty" data-act="add-photo"><span class="ptape" aria-hidden="true"></span><span class="ph-empty">'+ICONS.camera+'<span>Ajoute une photo :<br>chaque jour, l\'une d\'elles s\'affichera ici.</span></span><figcaption>photo du jour ♡</figcaption></button>')
+    + (daily ? dailyBubble(daily) : '')
     + (lastPoster ? polaroid(lastPoster.posterUrl ? '<img src="'+esc(safeImg(lastPoster.posterUrl) || "")+'" alt="" referrerpolicy="no-referrer">' : photoTag(lastPoster.photoId, "", ""), (lastPoster.title || "").toLowerCase().slice(0, 28), "small", 'data-act="show-item" data-id="'+esc(lastPoster.id)+'" role="button" tabindex="0"') : '')
     + (gifts.length ? '<a href="#cadeaux" data-act="open-gifts" class="stk-link">'+STICKER(plural(gifts.length, "cadeau", "cadeaux")+'<br>à ouvrir', "s1")+'</a>' : STICKER("coucou ♡", "s1"))
     + '<button class="capy" data-act="capy" aria-label="Quelque chose se cache ici">'+CAPY_SVG+'</button>'
