@@ -883,6 +883,13 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 .notif.new{border-color:var(--accent)}
 .nmore{margin-top:8px;font:inherit;font-size:.82rem;font-weight:800;background:none;border:none;color:var(--deep);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 @media (max-width:640px){.notif{grid-template-columns:auto 1fr;padding:8px 10px}.nwhen{grid-column:2}.nhead h2{font-size:1.15rem}}
+/* Cartes domaines : le texte reste lisible au-dessus de l'icône */
+.ccard small,.ccard strong,.ccard em{z-index:2;text-shadow:0 0 3px var(--card),0 0 8px var(--card),0 0 14px var(--card)}
+.ccard strong,.ccard em{max-width:calc(100% - 40px)}
+.ccard .big{width:124px;height:124px;right:-18px;bottom:-18px;z-index:1}
+.ccard .go{z-index:3}
+.ccard.long strong{font-size:1.45rem}
+@media (max-width:760px){.ccard .big{width:90px;height:90px}.ccard.long strong{font-size:1.08rem}.ccard strong,.ccard em{max-width:100%}}
 
 </style>
 
@@ -907,7 +914,7 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 
 </script>
 <script>
-const APP_VERSION = "16/11 à 18h09";
+const APP_VERSION = "17/11 à 16h09";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1832,7 +1839,8 @@ function renderHomeColoc(){
   const first = state.items.reduce((m, i) => i.createdAt && i.createdAt < m ? i.createdAt : m, Date.now());
   const days = Math.max(1, Math.floor((startOfDay(Date.now()) - startOfDay(s.since || first)) / DAY) + 1);
   const daily = dailyPick();
-  const lastPoster = [...state.items].filter(i => !isWrapped(i) && (i.posterUrl || i.photoId) && (!daily || i.id !== daily.id)).sort((a,b) => (b.createdAt||0) - (a.createdAt||0))[0];
+  const sugPool = [...state.items].filter(i => !isWrapped(i) && (i.posterUrl || i.photoId) && (!daily || i.id !== daily.id)).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  const lastPoster = sugPool.find(i => i.author && i.author !== state.me && !(i.seenBy || []).includes(state.me)) || sugPool.find(i => i.author && i.author !== state.me) || sugPool[0];
   const nav = '<nav class="cnav"><div class="clogo">'+esc(words.slice(0, Math.ceil(words.length/2)).join(" "))+'<br>'+esc(words.slice(Math.ceil(words.length/2)).join(" "))+'</div>'
     + '<div class="clinks"><a href="#domaines" data-act="scroll-domains">Domaines</a><a href="#cadeaux" data-act="open-gifts">Cadeaux'+(gifts.length ? '<b>'+gifts.length+'</b>' : '')+'</a><a href="#a-regarder" data-act="open-watch">À regarder</a><a href="#favoris" data-act="open-fav">Favoris</a><a href="#" data-act="reglages">Réglages</a><a href="#" data-act="notifs-all" class="nbell" aria-label="Notifications">'+BELL+(nUnread ? '<b>'+nUnread+'</b>' : '')+'</a></div>'
     + '<button class="btn primary" data-act="add">'+PAW+' Ajouter</button></nav>';
@@ -1860,7 +1868,7 @@ function renderHomeColoc(){
   h += '<div class="chead" id="domaines"><h2>Nos domaines</h2><button class="btn small" data-act="new-domain">+ Nouveau domaine</button></div><div class="ccards">';
   for(const c of cats){
     const th = themeOf(c), n = state.items.filter(i => i.cat === c.id).length, g = state.items.filter(i => i.cat === c.id && isWrapped(i)).length;
-    h += '<a class="ccard" href="#d-'+esc(c.id)+'" data-act="open-domain" data-id="'+esc(c.id)+'" draggable="true" data-drag="cat:'+esc(c.id)+'" data-drop="cat:'+esc(c.id)+'" style="--dc:'+th.accent+';--dd:'+th.deep+'">'
+    h += '<a class="ccard'+((c.name || "").length > 11 ? ' long' : '')+'" href="#d-'+esc(c.id)+'" data-act="open-domain" data-id="'+esc(c.id)+'" draggable="true" data-drag="cat:'+esc(c.id)+'" data-drop="cat:'+esc(c.id)+'" style="--dc:'+th.accent+';--dd:'+th.deep+'">'
       + (c.coverId ? photoTag(c.coverId, "ccover", "") : '')
       + '<small>'+plural(n, "petit truc", "petits trucs")+'</small><strong>'+esc(c.name)+'</strong>'+(c.desc ? '<em>'+esc(c.desc)+'</em>' : '')
       + '<span class="big">'+ICONS[iconOf(c)]+'</span>'
@@ -2255,7 +2263,7 @@ function isMedia(it){
 
 /* ---------- Photo du jour ---------- */
 function dailyPick(){
-  const pool = state.items.filter(i => i.photoId && i.inDaily !== false && !isWrapped(i)).sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const pool = state.items.filter(i => i.photoId && i.inDaily !== false).sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   if(!pool.length) return null;
   const d = new Date();
   let h = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
