@@ -890,6 +890,11 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 .ccard .go{z-index:3}
 .ccard.long strong{font-size:1.45rem}
 @media (max-width:760px){.ccard .big{width:90px;height:90px}.ccard.long strong{font-size:1.08rem}.ccard strong,.ccard em{max-width:100%}}
+.tophome{margin-right:auto;display:inline-flex;align-items:center;gap:7px;padding:7px 14px 7px 12px;border-radius:999px;background:var(--deep);color:#fff;text-decoration:none;font-weight:800;font-size:.82rem;letter-spacing:.04em;border:2px solid var(--ink);box-shadow:0 2px 0 var(--ink);transition:transform .15s}
+.tophome:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.tophome:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.topbar{align-items:center}
+@media (max-width:640px){html[data-skin="coloc"] .topbar .tophome{padding:6px 12px 6px 10px;font-size:.78rem}}
 
 </style>
 
@@ -914,7 +919,7 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 
 </script>
 <script>
-const APP_VERSION = "17/11 à 18h07";
+const APP_VERSION = "17/11 à 18h13";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -1753,7 +1758,8 @@ function renderSync(){
   el.dataset.state = state.busy || state.pending.length ? "busy" : state.syncError ? "err" : "ok";
 }
 function topbar(){
-  return '<div class="topbar"><span id="sync" class="sync"></span><span class="me">'+esc(state.me)+'</span>'
+  const home = state.route.page !== "home" ? '<a class="tophome" href="#" data-act="home" aria-label="Revenir à l\'accueil"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg><span>Accueil</span></a>' : '';
+  return '<div class="topbar">'+home+'<span id="sync" class="sync"></span><span class="me">'+esc(state.me)+'</span>'
     + '<button class="icon-btn" data-act="reglages">Réglages</button><button class="icon-btn" data-act="switch-me">Changer</button><button class="icon-btn" data-act="logout">Se déconnecter</button></div>';
 }
 
