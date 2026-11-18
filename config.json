@@ -1,0 +1,10 @@
+{
+  "v": 2,
+  "salt": "E1oT547F37bhsinDWZt4tA==",
+  "token": "b1d1eiTmqVXX2HIFTooCi8F4fhef2iYHhPuCmA9ZlBiYCdNXWzQktMicJJ65UIpZ7org+pn6MWFWRsne3yaWLZMhC6Io3ZvPpDGRuyDVd1PSWYgVTjRuUKeX/rC/NB8G21Dqbwh3a8KUQnTT6OfOgQ2mmzNkCPDgpw==",
+  "title": "Notre petite coloc",
+  "kdf": "argon2id",
+  "m": 65536,
+  "t": 3,
+  "p": 1
+}
