@@ -895,6 +895,14 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 .tophome:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .topbar{align-items:center}
 @media (max-width:640px){html[data-skin="coloc"] .topbar .tophome{padding:6px 12px 6px 10px;font-size:.78rem}}
+/* Bandes-annonces */
+.sheet .trailer-field{display:none}
+.sheet.is-film:not(.mode-text) .trailer-field{display:grid}
+.trailer-btn{background:var(--ink);color:#fff;border-color:var(--ink)}
+.trailer-btn:hover{filter:brightness(1.2)}
+.sheet.ytsheet{max-width:860px}
+.ytplayer{aspect-ratio:16/9;width:100%;border-radius:16px;overflow:hidden;border:2px solid var(--ink);background:#000}
+.ytplayer iframe{width:100%;height:100%;border:0;display:block}
 
 </style>
 
@@ -919,7 +927,7 @@ html[data-skin="coloc"] .card img.poster.vertical{max-height:none}
 
 </script>
 <script>
-const APP_VERSION = "17/11 à 18h13";
+const APP_VERSION = "18/11 à 17h03";
 (() => {
 /* =========================================================
    Réglages : à remplir seulement si le site n'est PAS servi
@@ -2097,7 +2105,7 @@ async function fromTMDB(term, type){
   let j;
   try{ j = await fetchJSON(url, bearer ? {headers:{Authorization:"Bearer " + key}} : undefined); }
   catch(e){ searchNotes.push(String(e.message) === "401" ? "TMDB refuse la clé : vérifie-la dans Réglages." : "TMDB ne répond pas (" + e.message + ")."); throw e; }
-  return (j.results || []).filter(r => r.poster_path).slice(0, 12).map(r => ({url:"https://image.tmdb.org/t/p/w500" + r.poster_path, title:r.title || r.name || "", sub:[yr(r.release_date || r.first_air_date), "TMDB"].filter(Boolean).join(" · ")}));
+  return (j.results || []).filter(r => r.poster_path).slice(0, 12).map(r => ({url:"https://image.tmdb.org/t/p/w500" + r.poster_path, title:r.title || r.name || "", tmdb:{id:r.id, type}, sub:[yr(r.release_date || r.first_air_date), "TMDB"].filter(Boolean).join(" · ")}));
 }
 async function fromTVmaze(term){
   const j = await fetchJSON("https://api.tvmaze.com/search/shows?q=" + encodeURIComponent(term));
@@ -2164,6 +2172,50 @@ async function searchPosters(term, kind){
   settled.forEach(s => { if(s.status === "fulfilled") s.value.forEach(r => { const k = r.url + "|" + (r.title || "").toLowerCase(); if(r.url && !seen.has(k)){ seen.add(k); out.push(r); } }); });
   if(!out.length && settled.every(s => s.status === "rejected")) throw new Error("aucune source");
   return (kind === "music" || kind === "song" ? singlesFirst(term, out) : out).slice(0, 24);
+}
+/* ---------- Bandes-annonces lues dans le site ---------- */
+const FILM_CAT_RE = /film|cin[ée]|s[ée]rie|anim[ée]|docu/i;
+const isFilmItem = it => FILM_CAT_RE.test((catById(it.cat) || {}).name || "");
+const trailerCache = new Map();
+async function tmdbGet(path){
+  const key = tmdbKey(); if(!key) throw new Error("nokey");
+  const bearer = key.startsWith("eyJ");
+  return fetchJSON("https://api.themoviedb.org/3" + path + (path.includes("?") ? "&" : "?") + (bearer ? "" : "api_key=" + encodeURIComponent(key)), bearer ? {headers:{Authorization:"Bearer " + key}} : undefined);
+}
+async function findTrailer(it){
+  if(it.trailer && ytId(it.trailer)) return ytId(it.trailer);
+  if(trailerCache.has(it.id)) return trailerCache.get(it.id);
+  let ref = it.tmdb;
+  if(!ref && it.title){
+    const n = (catById(it.cat) || {}).name || "";
+    const types = /s[ée]rie/i.test(n) ? ["tv","movie"] : ["movie","tv"];
+    for(const t of types){
+      const j = await tmdbGet("/search/" + t + "?query=" + encodeURIComponent(it.title) + "&language=fr-FR&include_adult=false");
+      const r = (j.results || [])[0]; if(r){ ref = {id: r.id, type: t}; break; }
+    }
+  }
+  let key = null;
+  if(ref){
+    const pick = list => { const v = (list || []).filter(x => x.site === "YouTube"); return (v.find(x => x.type === "Trailer" && x.official) || v.find(x => x.type === "Trailer") || v.find(x => x.type === "Teaser") || v[0] || {}).key || null; };
+    for(const lang of ["fr-FR", "en-US", ""]){
+      const j = await tmdbGet("/" + ref.type + "/" + ref.id + "/videos" + (lang ? "?language=" + lang : ""));
+      key = pick(j.results); if(key) break;
+    }
+  }
+  trailerCache.set(it.id, key);
+  return key;
+}
+async function playTrailer(it){
+  let id = null, err = "";
+  try{ id = await findTrailer(it); }catch(e){ err = e.message === "nokey" ? "nokey" : "net"; }
+  const search = "https://www.youtube.com/results?search_query=" + encodeURIComponent((it.title || "") + " bande annonce");
+  if(!id){
+    openModal('<h2>Bande-annonce</h2><p class="help">'+(err === "nokey" ? "Pour trouver les bandes-annonces toute seule, il faut la clé TMDB dans Réglages. Tu peux aussi coller le lien YouTube de la bande-annonce dans la fiche (Modifier)." : "Je n'ai pas trouvé de bande-annonce pour « "+esc(it.title || "")+" ». Tu peux coller son lien YouTube dans la fiche (Modifier).")+'</p>'
+      + '<div class="sheet-actions"><a class="btn" href="'+esc(search)+'" target="_blank" rel="noopener noreferrer">Chercher sur YouTube</a><button type="button" class="btn primary" data-act="close">Fermer</button></div>');
+    return;
+  }
+  openModal('<div class="ytplayer"><iframe src="https://www.youtube-nocookie.com/embed/'+esc(id)+'?autoplay=1&rel=0&modestbranding=1&playsinline=1" title="Bande-annonce de '+esc(it.title || "")+'" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>'
+    + '<div class="sheet-actions"><a class="btn" href="https://www.youtube.com/watch?v='+esc(id)+'" target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube</a><button type="button" class="btn primary" data-act="close">Fermer</button></div>', sheet => sheet.classList.add("ytsheet"));
 }
 function ytId(u){
   try{
@@ -2462,6 +2514,7 @@ function cardHTML(it, idx, ctx){
   if(it.title) h += '<h3>'+esc(it.title)+'</h3>';
   if(it.artist) h += '<p class="artist">'+esc(it.artist)+'</p>';
   if(hasPlatforms) h += mbtns;
+  if(isFilmItem(it) && !isWrapped(it)) h += '<div class="links"><button type="button" class="btn small trailer-btn" data-act="trailer" data-id="'+esc(it.id)+'">▶ Bande-annonce</button></div>';
   if(it.rich) h += '<div class="rich">'+richHTML(it.rich)+'</div><button type="button" class="rich-more" data-act="rich-more">Lire tout</button>';
   const both = it.why && it.note;
   if(it.why) h += '<div class="notebox why">'+(both || !it.title ? '<span class="nlabel">Pourquoi</span>' : '')+'<p class="note">'+esc(it.why)+'</p></div>';
@@ -2535,6 +2588,7 @@ function itemForm(it, preset){
     +   '<button type="button" class="btn small" id="f-psearch">Chercher avec le titre</button></div>'
     +   '<div id="f-pres" class="pres"></div><div id="f-pcur"></div>'
     +   '<span class="help">Des affiches te sont proposées pendant que tu tapes le titre. « Titre (musique) » cherche le morceau, « Album entier » cherche l\'album. Pour un livre, tu peux taper le titre et l\'auteur. Pour un lien YouTube, un short ou un TikTok, la miniature s\'affiche toute seule.</span></div>'
+    + '<div class="field trailer-field"><label for="f-trailer">Bande-annonce (facultatif)</label><input type="url" id="f-trailer" value="'+esc(it.trailer||"")+'" placeholder="https://www.youtube.com/watch?v=…"><span class="help">Laisse vide : je la trouve toute seule avec la clé TMDB. Colle un lien YouTube si tu veux en choisir une précise.</span></div>'
     + '<div class="field"><label for="f-url">Lien</label><input type="url" id="f-url" value="'+esc(it.url||"")+'" placeholder="https://… (facultatif)"><span class="help">Musique : colle un lien Spotify ou Tidal, l\'autre pourra l\'ouvrir sur son appli à elle.</span></div>'
     + '<div class="field"><label for="f-why">Pourquoi</label><textarea id="f-why" maxlength="4000" placeholder="Ce que j\'en ai pensé, pourquoi j\'ai envie de te le partager… (facultatif)">'+esc(it.why||"")+'</textarea></div>'
     + '<div class="field"><label for="f-note">Pourquoi ça m\'a fait penser à toi</label><textarea id="f-note" maxlength="4000" placeholder="(facultatif)">'+esc(it.note||"")+'</textarea></div>'
@@ -2627,7 +2681,9 @@ function itemForm(it, preset){
     let musicLinks = null, musicFor = "";
     const urlField = sheet.querySelector("#f-url");
     const urlHelp = document.createElement("span"); urlHelp.className = "help murl"; urlField.parentElement.appendChild(urlHelp);
-    let ttIdFound = it.ttId || "";
+    let ttIdFound = it.ttId || "", tmdbRef = it.tmdb || null;
+    const setFilm = () => sheet.classList.toggle("is-film", FILM_CAT_RE.test((catById(catSel.value) || {}).name || ""));
+    setFilm(); catSel.addEventListener("change", setFilm);
     const fillFromLink = async () => {
       const u = urlField.value.trim();
       if(sheet.classList.contains("mode-text") || u === musicFor) return;
@@ -2689,7 +2745,7 @@ function itemForm(it, preset){
         const notes = searchNotes.length ? '<p class="help pnote">'+searchNotes.map(esc).join("<br>")+'</p>' : '';
         pres.innerHTML = notes + (res.length ? res.map((r, i) => '<button type="button" class="pres-item" data-i="'+i+'"><img src="'+esc(r.url)+'" alt="" loading="lazy" referrerpolicy="no-referrer"><span>'+esc(r.title)+'</span><small>'+esc(r.sub)+'</small></button>').join("")
           : '<p class="help">Rien trouvé. Essaie un autre type ou une autre orthographe.</p>');
-        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; const urlIn = sheet.querySelector("#f-url"); if(r.link && urlIn && !urlIn.value.trim() && (pkind.value === "music" || pkind.value === "song" || pkind.value === "album")){ urlIn.value = r.link; fillFromLink(); } if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; const ar = sheet.querySelector("#f-artist"); if(r.artist && ar && !ar.value.trim()) ar.value = r.artist; pres.innerHTML = ""; drawPoster(); };
+        pres.onclick = e => { const b = e.target.closest(".pres-item"); if(!b) return; const r = res[+b.dataset.i]; posterUrl = r.url; tmdbRef = r.tmdb || null; const urlIn = sheet.querySelector("#f-url"); if(r.link && urlIn && !urlIn.value.trim() && (pkind.value === "music" || pkind.value === "song" || pkind.value === "album")){ urlIn.value = r.link; fillFromLink(); } if(r.title && titleIn.value.trim().length < r.title.length && r.title.toLowerCase().includes(titleIn.value.trim().toLowerCase())) titleIn.value = r.title; const ar = sheet.querySelector("#f-artist"); if(r.artist && ar && !ar.value.trim()) ar.value = r.artist; pres.innerHTML = ""; drawPoster(); };
       }catch(err){ pres.innerHTML = '<p class="help">La recherche ne répond pas. '+(searchNotes.length ? searchNotes.map(esc).join(" ") : 'Vérifie ta connexion et réessaie.')+'</p>'; }
     };
     sheet.querySelector("#f-psearch").addEventListener("click", () => runSearch(false));
@@ -2705,7 +2761,7 @@ function itemForm(it, preset){
         url: sheet.querySelector("#f-url").value.trim(),
         note: sheet.querySelector("#f-note").value.trim(),
         why: sheet.querySelector("#f-why").value.trim(),
-        moods: [...sel], photoId: getPhoto() || null, inDaily: sheet.querySelector("#f-indaily").checked, ttId: platformOfVideo(sheet.querySelector("#f-url").value) === "tiktok" ? (tiktokIdFromUrl(sheet.querySelector("#f-url").value) || ttIdFound || null) : null, posterUrl: posterUrl || null, updatedAt: Date.now()
+        moods: [...sel], photoId: getPhoto() || null, inDaily: sheet.querySelector("#f-indaily").checked, tmdb: posterUrl && tmdbRef ? tmdbRef : (posterUrl === it.posterUrl ? it.tmdb || null : null), trailer: ytId(sheet.querySelector("#f-trailer").value) ? sheet.querySelector("#f-trailer").value.trim() : null, ttId: platformOfVideo(sheet.querySelector("#f-url").value) === "tiktok" ? (tiktokIdFromUrl(sheet.querySelector("#f-url").value) || ttIdFound || null) : null, posterUrl: posterUrl || null, updatedAt: Date.now()
       };
       const richClean = sanitizeRich(ed.innerHTML);
       data.rich = (richText(richClean) || /<img/.test(richClean)) ? richClean : null;
@@ -3174,6 +3230,7 @@ document.addEventListener("click", e => {
   if(act === "reglages"){ reglagesForm(); return; }
   if(act === "notifs-read"){ markNotifsRead(); render(); return; }
   if(act === "notifs-all"){ e.preventDefault && e.preventDefault(); notifsModal(); return; }
+  if(act === "trailer"){ const it = state.items.find(i => i.id === el.dataset.id); if(it){ el.disabled = true; el.textContent = "Je cherche…"; playTrailer(it).finally(() => { if(el.isConnected){ el.disabled = false; el.textContent = "▶ Bande-annonce"; } }); } return; }
   if(act === "tt-play"){ const it = state.items.find(i => i.id === el.dataset.id); if(it) playTikTok(it); return; }
   if(act === "change-pw"){ passwordForm(); return; }
   if(act === "rich-more"){ const card = el.closest(".card"); if(card){ const open = card.classList.toggle("rich-open"); el.textContent = open ? "Replier" : "Lire tout"; } return; }
